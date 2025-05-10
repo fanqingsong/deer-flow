@@ -41,7 +41,6 @@ export async function SiteHeader() {
           <span>DeerFlow</span>
         </div>
         <div className="relative flex items-center">
-          {/* 放射性光源效果 */}
           <div
             className="pointer-events-none absolute inset-0 z-0 h-full w-full rounded-full opacity-60 blur-2xl"
             style={{
