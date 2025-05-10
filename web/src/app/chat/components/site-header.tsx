@@ -1,7 +1,11 @@
+// Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
+// SPDX-License-Identifier: MIT
+
 import { StarFilledIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
+import { env } from "~/env";
 
 export async function SiteHeader() {
   let stars = 300; // Default value
@@ -10,9 +14,9 @@ export async function SiteHeader() {
     const response = await fetch(
       "https://api.github.com/repos/bytedance/deer-flow",
       {
-        headers: process.env.GITHUB_OAUTH_TOKEN
+        headers: env.GITHUB_OAUTH_TOKEN
           ? {
-              Authorization: `Bearer ${process.env.GITHUB_OAUTH_TOKEN}`,
+              Authorization: `Bearer ${env.GITHUB_OAUTH_TOKEN}`,
               "Content-Type": "application/json",
             }
           : {},
