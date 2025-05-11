@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  deerflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deerflow
+    # command: ["./bootstrap.sh", "-d"]
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    volumes:
+      - ./conf.yaml:/app/conf.yaml
+      - ./.env:/app/.env
+    restart: unless-stopped
