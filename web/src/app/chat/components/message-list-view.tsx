@@ -10,7 +10,10 @@ import { LoadingAnimation } from "~/components/deer-flow/loading-animation";
 import { Markdown } from "~/components/deer-flow/markdown";
 import { RainbowText } from "~/components/deer-flow/rainbow-text";
 import { RollingText } from "~/components/deer-flow/rolling-text";
-import { ScrollContainer, type ScrollContainerRef } from "~/components/deer-flow/scroll-container";
+import {
+  ScrollContainer,
+  type ScrollContainerRef,
+} from "~/components/deer-flow/scroll-container";
 import { Tooltip } from "~/components/deer-flow/tooltip";
 import { Button } from "~/components/ui/button";
 import {
@@ -81,7 +84,9 @@ export function MessageListView({
         scrollContainerRef.current.scrollToBottom();
       }
     }, 500);
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -119,7 +124,7 @@ function MessageListItem({
   interruptMessage,
   onFeedback,
   onSendMessage,
-  onToggleResearch
+  onToggleResearch,
 }: {
   className?: string;
   messageId: string;
@@ -166,7 +171,10 @@ function MessageListItem({
       } else if (startOfResearch) {
         content = (
           <div className="w-full px-4">
-            <ResearchCard researchId={message.id} onToggleResearch={onToggleResearch} />
+            <ResearchCard
+              researchId={message.id}
+              onToggleResearch={onToggleResearch}
+            />
           </div>
         );
       } else {
@@ -221,7 +229,7 @@ function MessageListItem({
         className={cn(
           `flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 shadow`,
           message.role === "user" &&
-          "text-primary-foreground bg-brand rounded-ee-none",
+            "text-primary-foreground bg-brand rounded-ee-none",
           message.role === "assistant" && "bg-card rounded-es-none",
           className,
         )}
@@ -234,7 +242,7 @@ function MessageListItem({
   function ResearchCard({
     className,
     researchId,
-    onToggleResearch
+    onToggleResearch,
   }: {
     className?: string;
     researchId: string;
@@ -333,10 +341,11 @@ function PlanCard({
       <CardHeader>
         <CardTitle>
           <Markdown animate>
-            {`### ${plan.title !== undefined && plan.title !== ""
-              ? plan.title
-              : "Deep Research"
-              }`}
+            {`### ${
+              plan.title !== undefined && plan.title !== ""
+                ? plan.title
+                : "Deep Research"
+            }`}
           </Markdown>
         </CardTitle>
       </CardHeader>
@@ -407,6 +416,9 @@ function PodcastCard({
   const isGenerating = useMemo(() => {
     return message.isStreaming;
   }, [message.isStreaming]);
+  const hasError = useMemo(() => {
+    return data?.error !== undefined;
+  }, [data]);
   const [isPlaying, setIsPlaying] = useState(false);
   return (
     <Card className={cn("w-[508px]", className)}>
@@ -414,15 +426,21 @@ function PodcastCard({
         <div className="text-muted-foreground flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             {isGenerating ? <LoadingOutlined /> : <Headphones size={16} />}
-            <RainbowText animated={isGenerating}>
-              {isGenerating
-                ? "Generating podcast..."
-                : isPlaying
-                  ? "Now playing podcast..."
-                  : "Podcast"}
-            </RainbowText>
+            {!hasError ? (
+              <RainbowText animated={isGenerating}>
+                {isGenerating
+                  ? "Generating podcast..."
+                  : isPlaying
+                    ? "Now playing podcast..."
+                    : "Podcast"}
+              </RainbowText>
+            ) : (
+              <div className="text-red-500">
+                Error when generating podcast. Please try again.
+              </div>
+            )}
           </div>
-          {!isGenerating && (
+          {!hasError && !isGenerating && (
             <div className="flex">
               <Tooltip title="Download podcast">
                 <Button variant="ghost" size="icon" asChild>
@@ -444,13 +462,17 @@ function PodcastCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <audio
-          className="w-full"
-          src={audioUrl}
-          controls
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        />
+        {audioUrl ? (
+          <audio
+            className="w-full"
+            src={audioUrl}
+            controls
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+        ) : (
+          <div className="w-full"></div>
+        )}
       </CardContent>
     </Card>
   );
