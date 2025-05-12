@@ -5,7 +5,15 @@ install_uv() {
   echo "Checking if uv is installed..."
   if ! command -v uv &> /dev/null; then
     echo "uv is not installed. Installing uv..."
-    pip install uv || { echo "Failed to install uv. Please check your Python and pip installation."; exit 1; }
+    if ! command -v curl &> /dev/null; then
+      echo "curl is not installed. Please install curl and try again."
+      exit 1
+    fi
+    if ! curl --version &> /dev/null; then
+      echo "curl is not working properly. Please check your installation."
+      exit 1
+    fi
+    curl -fsSL https://astral.sh/uv/install.sh | bash || { echo "Failed to install uv. Please check your internet connection."; exit 1; }
     echo "uv installed successfully."
   else
     echo "uv is already installed."
@@ -17,7 +25,15 @@ install_pnpm() {
   echo "Checking if pnpm is installed..."
   if ! command -v pnpm &> /dev/null; then
     echo "pnpm is not installed. Installing pnpm..."
-    npm install -g pnpm || { echo "Failed to install pnpm. Please check your Node.js and npm installation."; exit 1; }
+    if ! command -v curl &> /dev/null; then
+      echo "curl is not installed. Please install curl and try again."
+      exit 1
+    fi
+    if ! curl --version &> /dev/null; then
+      echo "curl is not working properly. Please check your installation."
+      exit 1
+    fi
+    curl -fsSL https://get.pnpm.io/install.sh | bash || { echo "Failed to install pnpm. Please check your internet connection."; exit 1; }
     echo "pnpm installed successfully."
   else
     echo "pnpm is already installed."
@@ -29,6 +45,14 @@ install_bun() {
   echo "Checking if bun is installed..."
   if ! command -v bun &> /dev/null; then
     echo "bun is not installed. Installing bun..."
+    if ! command -v curl &> /dev/null; then
+      echo "curl is not installed. Please install curl and try again."
+      exit 1
+    fi
+    if ! curl --version &> /dev/null; then
+      echo "curl is not working properly. Please check your installation."
+      exit 1
+    fi
     curl -fsSL https://bun.sh/install | bash || { echo "Failed to install bun. Please check your internet connection."; exit 1; }
     echo "bun installed successfully."
   else

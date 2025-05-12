@@ -8,6 +8,25 @@ GOTO :MAIN
 
 REM Functions for installation
 :INSTALL_UV
+REM Check and install pip first
+echo Checking if pip is installed...
+WHERE pip >nul 2>nul
+IF ERRORLEVEL 1 (
+    ECHO pip is not installed. Installing pip...
+    powershell -Command "Invoke-RestMethod -Uri https://bootstrap.pypa.io/get-pip.py -UseBasicParsing -OutFile get-pip.py"
+    python get-pip.py
+    DEL get-pip.py
+    IF ERRORLEVEL 1 (
+        ECHO Failed to install pip. Please check your Python installation.
+        EXIT /B 1
+    )
+    ECHO pip installed successfully.
+    REM Refresh environment variables
+    SET "PATH=%PATH%;%APPDATA%\Python\Python312\Scripts;%LOCALAPPDATA%\Programs\Python\Python312\Scripts"
+) ELSE (
+    ECHO pip is already installed.
+)
+
 REM Install uv
 echo Checking if uv is installed...
 WHERE uv >nul 2>nul
@@ -15,7 +34,18 @@ IF ERRORLEVEL 1 (
     ECHO uv is not installed. Installing uv...
     pip install uv
     IF ERRORLEVEL 1 (
-        ECHO Failed to install uv. Please check your Python and pip installation.
+        ECHO Failed to install uv via pip. Please check your Python installation.
+        EXIT /B 1
+    )
+    
+    REM Add UV installation directory to PATH for current session
+    SET "UV_PATH=%USERPROFILE%\.local\bin;%APPDATA%\Python\Python312\Scripts;%LOCALAPPDATA%\Programs\Python\Python312\Scripts"
+    SET "PATH=%UV_PATH%;%PATH%"
+    
+    REM Verify installation
+    WHERE uv >nul 2>nul
+    IF ERRORLEVEL 1 (
+        ECHO Failed to find uv in PATH after installation.
         EXIT /B 1
     )
     ECHO uv installed successfully.
@@ -28,11 +58,10 @@ EXIT /B 0
 REM Install pnpm
 echo Checking if pnpm is installed...
 WHERE pnpm >nul 2>nul
-IF ERRORLEVEL 1 (
-    ECHO pnpm is not installed. Installing pnpm...
-    npm install -g pnpm
+IF ERRORLEVEL 1 (    ECHO pnpm is not installed. Installing pnpm...
+    powershell -Command "Invoke-RestMethod -Uri https://get.pnpm.io/install.ps1 -UseBasicParsing | Invoke-Expression"
     IF ERRORLEVEL 1 (
-        ECHO Failed to install pnpm. Please check your Node.js and npm installation.
+        ECHO Failed to install pnpm. Please check your internet connection and try again.
         EXIT /B 1
     )
     ECHO pnpm installed successfully.
@@ -47,7 +76,7 @@ echo Checking if bun is installed...
 WHERE bun >nul 2>nul
 IF ERRORLEVEL 1 (
     ECHO bun is not installed. Installing bun...
-    powershell -Command "Invoke-WebRequest -Uri https://bun.sh/install.ps1 -UseBasicParsing | Invoke-Expression"
+    powershell -Command "Invoke-RestMethod -Uri https://bun.sh/install.ps1 -UseBasicParsing | Invoke-Expression"
     IF ERRORLEVEL 1 (
         ECHO Failed to install bun. Please check your internet connection and try again.
         EXIT /B 1
