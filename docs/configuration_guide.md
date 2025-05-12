@@ -1,13 +1,26 @@
 # Configuration Guide
 
-## Quick Settings
+## Introduction
 
-Copy the `conf.yaml.example` file to `conf.yaml` and modify the configurations to match your specific settings and requirements.
+This guide explains how to configure DeerFlow for your needs. The configuration process involves two main files:
+- `.env` for environment variables and API keys
+- `conf.yaml` for LLM model settings
 
+## Quick Start
+
+1. Create your configuration file:
 ```bash
-cd deer-flow
+# Copy the example config
 cp conf.yaml.example conf.yaml
 ```
+
+2. Create your environment file:
+```bash
+# Copy the example env file
+cp .env.example .env
+```
+
+3. Edit both files according to your needs (see sections below)
 
 ## Which models does DeerFlow support?
 
