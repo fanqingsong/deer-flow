@@ -43,9 +43,10 @@ npm-debug.log
 Thumbs.db
 
 # Project specific
-tests/
+conf.yaml
+web/
 docs/
 examples/
 assets/
+tests/
 *.log
-
