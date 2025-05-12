@@ -214,90 +214,88 @@ function MessageListItem({
     }
     return null;
   }
+}
 
-  function MessageBubble({
-    className,
-    message,
-    children,
-  }: {
-    className?: string;
-    message: Message;
-    children: React.ReactNode;
-  }) {
-    return (
-      <div
-        className={cn(
-          `flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 shadow`,
-          message.role === "user" &&
-            "text-primary-foreground bg-brand rounded-ee-none",
-          message.role === "assistant" && "bg-card rounded-es-none",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    );
-  }
+function MessageBubble({
+  className,
+  message,
+  children,
+}: {
+  className?: string;
+  message: Message;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        `flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 shadow`,
+        message.role === "user" &&
+          "text-primary-foreground bg-brand rounded-ee-none",
+        message.role === "assistant" && "bg-card rounded-es-none",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
-  function ResearchCard({
-    className,
-    researchId,
-    onToggleResearch,
-  }: {
-    className?: string;
-    researchId: string;
-    onToggleResearch?: () => void;
-  }) {
-    const reportId = useStore((state) =>
-      state.researchReportIds.get(researchId),
-    );
-    const hasReport = useStore((state) =>
-      state.researchReportIds.has(researchId),
-    );
-    const reportGenerating = useStore(
-      (state) => hasReport && state.messages.get(reportId!)!.isStreaming,
-    );
-    const openResearchId = useStore((state) => state.openResearchId);
-    const state = useMemo(() => {
-      if (hasReport) {
-        return reportGenerating ? "Generating report..." : "Report generated";
-      }
-      return "Researching...";
-    }, [hasReport, reportGenerating]);
-    const title = useResearchTitle(researchId);
-    const handleOpen = useCallback(() => {
-      if (openResearchId === researchId) {
-        closeResearch();
-      } else {
-        openResearch(researchId);
-      }
-      onToggleResearch?.();
-    }, [openResearchId, researchId, onToggleResearch]);
-    return (
-      <Card className={cn("w-full", className)}>
-        <CardHeader>
-          <CardTitle>
-            <RainbowText animated={state !== "Report generated"}>
-              {title !== undefined && title !== "" ? title : "Deep Research"}
-            </RainbowText>
-          </CardTitle>
-        </CardHeader>
-        <CardFooter>
-          <div className="flex w-full">
-            <RollingText className="text-muted-foreground flex-grow text-sm">
-              {state}
-            </RollingText>
-            <Button
-              variant={!openResearchId ? "default" : "outline"}
-              onClick={handleOpen}
-            >
-              {researchId !== openResearchId ? "Open" : "Close"}
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    );
-  }
+function ResearchCard({
+  className,
+  researchId,
+  onToggleResearch,
+}: {
+  className?: string;
+  researchId: string;
+  onToggleResearch?: () => void;
+}) {
+  const reportId = useStore((state) => state.researchReportIds.get(researchId));
+  const hasReport = useStore((state) =>
+    state.researchReportIds.has(researchId),
+  );
+  const reportGenerating = useStore(
+    (state) => hasReport && state.messages.get(reportId!)!.isStreaming,
+  );
+  const openResearchId = useStore((state) => state.openResearchId);
+  const state = useMemo(() => {
+    if (hasReport) {
+      return reportGenerating ? "Generating report..." : "Report generated";
+    }
+    return "Researching...";
+  }, [hasReport, reportGenerating]);
+  const title = useResearchTitle(researchId);
+  const handleOpen = useCallback(() => {
+    if (openResearchId === researchId) {
+      closeResearch();
+    } else {
+      openResearch(researchId);
+    }
+    onToggleResearch?.();
+  }, [openResearchId, researchId, onToggleResearch]);
+  return (
+    <Card className={cn("w-full", className)}>
+      <CardHeader>
+        <CardTitle>
+          <RainbowText animated={state !== "Report generated"}>
+            {title !== undefined && title !== "" ? title : "Deep Research"}
+          </RainbowText>
+        </CardTitle>
+      </CardHeader>
+      <CardFooter>
+        <div className="flex w-full">
+          <RollingText className="text-muted-foreground flex-grow text-sm">
+            {state}
+          </RollingText>
+          <Button
+            variant={!openResearchId ? "default" : "outline"}
+            onClick={handleOpen}
+          >
+            {researchId !== openResearchId ? "Open" : "Close"}
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
 }
 
 const GREETINGS = ["Cool", "Sounds great", "Looks good", "Great", "Awesome"];
