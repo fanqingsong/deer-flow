@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+#.env
+#.env.example
+#conf.yaml
+#conf.yaml.example
+web/.next
+web/node_modules
+#web/.env
+#web/.env.example
