@@ -97,8 +97,9 @@ brew install marp-cli
 ```bash
 cd deer-flow/web
 pnpm install
+# 或者使用 Bun
+bun install
 ```
-
 ### 配置
 
 请参阅[配置指南](docs/configuration_guide.md)获取更多详情。
@@ -113,6 +114,15 @@ pnpm install
 ```bash
 # 在类bash的shell中运行项目
 uv run main.py
+```bash
+# 使用 CLI 模式运行后端和前端服务器
+
+# 在macOS/Linux上
+./bootstrap.sh --cli
+# 在Windows上
+bootstrap.bat --cli
+```
+
 ```
 
 ### Web UI
@@ -123,11 +133,18 @@ uv run main.py
 
 ```bash
 # 在开发模式下同时运行后端和前端服务器
+
+# 使用 pnpm
 # 在macOS/Linux上
 ./bootstrap.sh -d
-
 # 在Windows上
 bootstrap.bat -d
+
+# 使用 Bun
+# 在macOS/Linux上
+./bootstrap.sh -b
+# 在Windows上
+bootstrap.bat -b
 ```
 
 打开浏览器并访问[`http://localhost:3000`](http://localhost:3000)探索Web UI。

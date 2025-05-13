@@ -58,7 +58,7 @@ DeerFlowはPythonで開発され、Node.jsで書かれたWeb UIが付属して�
 - **[`nvm`](https://github.com/nvm-sh/nvm):**
   複数のNode.jsランタイムバージョンを簡単に管理します。
 
-- **[`pnpm`](https://pnpm.io/installation):**
+- **[`pnpm`](https://pnpm.io/installation)** または **[`bun`](https://bun.sh):**
   Node.jsプロジェクトの依存関係をインストールおよび管理します。
 
 ### 環境要件
@@ -97,6 +97,8 @@ brew install marp-cli
 ```bash
 cd deer-flow/web
 pnpm install
+# または Bun を使用
+bun install
 ```
 
 ### 設定
@@ -113,6 +115,11 @@ pnpm install
 ```bash
 # bashライクなシェルでプロジェクトを実行
 uv run main.py
+# macOS/Linuxの場合
+./bootstrap.sh --cli
+
+# Windowsの場合
+bootstrap.bat --cli
 ```
 
 ### Web UI
@@ -123,11 +130,18 @@ uv run main.py
 
 ```bash
 # 開発モードでバックエンドとフロントエンドサーバーの両方を実行
+
+# pnpmを使用
 # macOS/Linuxの場合
 ./bootstrap.sh -d
-
 # Windowsの場合
 bootstrap.bat -d
+
+# Bunを使用
+# macOS/Linuxの場合
+./bootstrap.sh -b
+# Windowsの場合
+bootstrap.bat -b
 ```
 
 ブラウザを開き、[`http://localhost:3000`](http://localhost:3000)にアクセスしてWeb UIを探索してください。

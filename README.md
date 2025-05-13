@@ -99,8 +99,13 @@ Optionally, install web UI dependencies via [pnpm](https://pnpm.io/installation)
 ```bash
 cd deer-flow/web
 pnpm install
-```
+pnpm dev
 
+# OR use Bun
+bun install
+bun dev
+# Use Bun to install web UI dependencies instead of pnpm
+```
 ### Configurations
 
 Please refer to the [Configuration Guide](docs/configuration_guide.md) for more details.
@@ -115,6 +120,10 @@ The quickest way to run the project is to use the console UI.
 ```bash
 # Run the project in a bash-like shell
 uv run main.py
+# On macOS/Linux
+./bootstrap.sh --cli
+# On Windows
+bootstrap.bat --cli
 ```
 
 ### Web UI
@@ -125,11 +134,18 @@ This project also includes a Web UI, offering a more dynamic and engaging intera
 
 ```bash
 # Run both the backend and frontend servers in development mode
+
+# Using pnpm
 # On macOS/Linux
 ./bootstrap.sh -d
-
 # On Windows
 bootstrap.bat -d
+
+# Using Bun
+# On macOS/Linux
+./bootstrap.sh -b
+# On Windows
+bootstrap.bat -b
 ```
 
 Open your browser and visit [`http://localhost:3000`](http://localhost:3000) to explore the web UI.
