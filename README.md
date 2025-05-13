@@ -351,7 +351,7 @@ When you submit a research topic in the Studio UI, you'll be able to see the ent
 
 You can also run this project with Docker.
 
-First, you need read the [configuration](#configuration) below. Make sure `.env`, `.conf.yaml` files are ready.
+First, you need read the [configuration](docs/configuration_guide.md) below. Make sure `.env`, `.conf.yaml` files are ready.
 
 Second, to build a Docker image of your own web server:
 
