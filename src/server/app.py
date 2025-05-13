@@ -46,8 +46,14 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+graph = None
 
-graph = build_graph_with_memory()
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize graph when application starts"""
+    global graph
+    graph = await build_graph_with_memory()
 
 
 @app.post("/api/chat/stream")
