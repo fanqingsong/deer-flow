@@ -137,6 +137,24 @@ bootstrap.bat -d
 Weitere Details finden Sie im Verzeichnis [`web`](./web/).
 
 
+### Schnelle Bereitstellung (Serverless)
+
+Sie können das Backend mit Docker als Serverless Function bereitstellen.
+
+1. Erstellen Sie das Docker-Image:
+```bash
+docker build -f DockerFile.backend . -t deer-flow-backend
+```
+
+2. Stellen Sie das erstellte Image auf der von Ihnen gewählten Serverless-Plattform bereit (z. B. VolcEngine, Alibaba Cloud Functions, AWS Lambda, Google Cloud Functions usw.) und erhalten Sie Ihren Serverless Function Endpoint. Spezifische Bereitstellungsschritte finden Sie in der Dokumentation der von Ihnen gewählten Plattform.
+
+3. Für die Frontend-Bereitstellung können Sie den von Vercel bereitgestellten Bereitstellungsbutton verwenden:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbytedance%2Fdeer-flow%2Ftree%2Fmain%2Fweb)
+
+Nach der Bereitstellung aktualisieren Sie bitte den Wert der Umgebungsvariable `NEXT_PUBLIC_API_URL` in der Vercel-Konsole auf den erhaltenen Backend Serverless Function Endpoint plus den Pfad `/api`. Wenn der Endpoint beispielsweise `https://deer-dkcxax.cn-hongkong.fcapp.run` ist, sollte `NEXT_PUBLIC_API_URL` auf `https://deer-dkcxax.cn-hongkong.fcapp.run/api` gesetzt werden.
+
+
 ## Unterstützte Suchmaschinen
 
 DeerFlow unterstützt mehrere Suchmaschinen, die in Ihrer `.env`-Datei über die Variable `SEARCH_API` konfiguriert werden können:

@@ -135,6 +135,24 @@ bootstrap.bat -d
 在[`web`](./web/)目录中探索更多详情。
 
 
+### 快速部署 (Serverless)
+
+可以使用 Docker 将后端部署为 Serverless Function。
+
+1. 构建 Docker 镜像：
+```bash
+docker build -f DockerFile.backend . -t deer-flow-backend
+```
+
+2. 将构建好的镜像部署到您选择的 Serverless 平台（例如 火山引擎, 阿里云函数计算, AWS Lambda, Google Cloud Functions 等），并获取您的 Serverless Function Endpoint。具体部署步骤请参考您所选平台的文档。
+
+3. 对于前端部署，可以使用 Vercel 提供的部署按钮：
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbytedance%2Fdeer-flow%2Ftree%2Fmain%2Fweb)
+
+部署完成后，请在 Vercel 控制台中配置环境变量 `NEXT_PUBLIC_API_URL` 的值更新为获取的后端 Serverless Function Endpoint 加上 `/api` 路径。例如，如果 Endpoint 是 `https://deer-dkcxax.cn-hongkong.fcapp.run`，则 `NEXT_PUBLIC_API_URL` 应设置为 `https://deer-dkcxax.cn-hongkong.fcapp.run/api`。
+
+
 ## 支持的搜索引擎
 
 DeerFlow支持多种搜索引擎，可以在`.env`文件中通过`SEARCH_API`变量进行配置：

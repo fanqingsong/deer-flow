@@ -135,6 +135,24 @@ bootstrap.bat -d
 [`web`](./web/)ディレクトリで詳細を確認できます。
 
 
+### 高速デプロイ (Serverless)
+
+Docker を使用してバックエンドを Serverless Function としてデプロイできます。
+
+1. Docker イメージをビルドします：
+```bash
+docker build -f DockerFile.backend . -t deer-flow-backend
+```
+
+2. ビルドしたイメージを選択した Serverless プラットフォーム（例：VolcEngine, Alibaba Cloud Functions, AWS Lambda, Google Cloud Functions など）にデプロイし、Serverless Function Endpoint を取得します。具体的なデプロイ手順については、選択したプラットフォームのドキュメントを参照してください。
+
+3. フロントエンドのデプロイには、Vercel が提供するデプロイボタンを使用できます：
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbytedance%2Fdeer-flow%2Ftree%2Fmain%2Fweb)
+
+デプロイ後、Vercel コンソールで環境変数 `NEXT_PUBLIC_API_URL` の値を、取得したバックエンド Serverless Function Endpoint に `/api` パスを追加したものに更新してください。例えば、Endpoint が `https://deer-dkcxax.cn-hongkong.fcapp.run` の場合、`NEXT_PUBLIC_API_URL` は `https://deer-dkcxax.cn-hongkong.fcapp.run/api` に設定する必要があります。
+
+
 ## サポートされている検索エンジン
 
 DeerFlowは複数の検索エンジンをサポートしており、`.env`ファイルの`SEARCH_API`変数で設定できます：
