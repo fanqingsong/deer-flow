@@ -137,6 +137,24 @@ Open your browser and visit [`http://localhost:3000`](http://localhost:3000) to 
 Explore more details in the [`web`](./web/) directory.
 
 
+### Quick Deployment (Serverless)
+
+You can deploy the backend as a Serverless Function using Docker.
+
+1. Build the Docker image:
+```bash
+docker build -f DockerFile.backend . -t deer-flow-backend
+```
+
+2. Deploy the built image to your chosen Serverless platform (e.g., VolcEngine, Alibaba Cloud Functions, AWS Lambda, Google Cloud Functions, etc.) and obtain your Serverless Function Endpoint. Please refer to the documentation of your chosen platform for specific deployment steps.
+
+3. For frontend deployment, you can use the Deploy button provided by Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbytedance%2Fdeer-flow%2Ftree%2Fmain%2Fweb)
+
+After deployment, please update the value of the environment variable `NEXT_PUBLIC_API_URL` in the Vercel console to the obtained backend Serverless Function Endpoint plus the `/api` path. For example, if the Endpoint is `https://deer-dkcxax.cn-hongkong.fcapp.run`, `NEXT_PUBLIC_API_URL` should be set to `https://deer-dkcxax.cn-hongkong.fcapp.run/api`.
+
+
 ## Supported Search Engines
 
 DeerFlow supports multiple search engines that can be configured in your `.env` file using the `SEARCH_API` variable:
