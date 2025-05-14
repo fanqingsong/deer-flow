@@ -341,7 +341,7 @@ async def _execute_agent_step(
         logger.warning(
             f"Invalid AGENT_RECURSION_LIMIT value: {os.getenv('AGENT_RECURSION_LIMIT')}. Using default value 25."
         )
-        recursion_limit = 30
+        recursion_limit = 25
 
     result = await agent.ainvoke(input=agent_input,config={"recursion_limit": recursion_limit})
     
