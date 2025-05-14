@@ -3,6 +3,7 @@
 
 import json
 import logging
+import os
 from typing import Annotated, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -333,7 +334,17 @@ async def _execute_agent_step(
         )
 
     # Invoke the agent
-    result = await agent.ainvoke(input=agent_input)
+    try:
+        recursion_limit = int(os.getenv("AGENT_RECURSION_LIMIT", "25"))
+        print("Recursion limit is set:",recursion_limit)
+    except ValueError:
+        logger.warning(
+            f"Invalid AGENT_RECURSION_LIMIT value: {os.getenv('AGENT_RECURSION_LIMIT')}. Using default value 25."
+        )
+        recursion_limit = 30
+
+    result = await agent.ainvoke(input=agent_input,config={"recursion_limit": recursion_limit})
+    
 
     # Process the result
     response_content = result["messages"][-1].content
