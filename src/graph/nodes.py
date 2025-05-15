@@ -337,7 +337,7 @@ async def _execute_agent_step(
     default_recursion_limit = 25
     try:
         env_value_str = os.getenv("AGENT_RECURSION_LIMIT", str(default_recursion_limit))
-        parsed_limit = int(env_value_str) 
+        parsed_limit = int(env_value_str)
 
         if parsed_limit > 0:
             recursion_limit = parsed_limit
@@ -349,15 +349,16 @@ async def _execute_agent_step(
             )
             recursion_limit = default_recursion_limit
     except ValueError:
-        raw_env_value = os.getenv('AGENT_RECURSION_LIMIT')
+        raw_env_value = os.getenv("AGENT_RECURSION_LIMIT")
         logger.warning(
             f"Invalid AGENT_RECURSION_LIMIT value: '{raw_env_value}'. "
             f"Using default value {default_recursion_limit}."
         )
         recursion_limit = default_recursion_limit
 
-    result = await agent.ainvoke(input=agent_input,config={"recursion_limit": recursion_limit})
-    
+    result = await agent.ainvoke(
+        input=agent_input, config={"recursion_limit": recursion_limit}
+    )
 
     # Process the result
     response_content = result["messages"][-1].content
