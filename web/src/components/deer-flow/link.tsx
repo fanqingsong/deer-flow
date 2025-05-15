@@ -6,15 +6,19 @@ import { WarningFilled } from "@ant-design/icons";
 export const Link = ({
   href,
   children,
+  checkLinkCredibility = false,
 }: {
   href: string | undefined;
   children: React.ReactNode;
+  checkLinkCredibility: boolean;
 }) => {
   const toolCalls = useToolCalls();
   const responding = useStore((state) => state.responding);
 
   const credibleLinks = useMemo(() => {
     const links = new Set<string>();
+    if (!checkLinkCredibility) return links;
+
     (toolCalls || []).forEach((call) => {
       if (call && call.name === "web_search" && call.result) {
         const result = JSON.parse(call.result) as Array<{ url: string }>;
@@ -27,11 +31,13 @@ export const Link = ({
   }, [toolCalls]);
 
   const isCredible = useMemo(() => {
-    return href && !responding ? credibleLinks.has(href) : true;
-  }, [credibleLinks, href, responding]);
+    return checkLinkCredibility && href && !responding
+      ? credibleLinks.has(href)
+      : true;
+  }, [credibleLinks, href, responding, checkLinkCredibility]);
 
   return (
-    <div className="flex items-center gap-1.5">
+    <span className="flex items-center gap-1.5">
       <a href={href} target="_blank" rel="noopener noreferrer">
         {children}
       </a>
@@ -43,6 +49,6 @@ export const Link = ({
           <WarningFilled className="text-sx transition-colors hover:!text-yellow-500" />
         </Tooltip>
       )}
-    </div>
+    </span>
   );
 };
