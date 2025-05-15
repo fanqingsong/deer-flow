@@ -334,14 +334,27 @@ async def _execute_agent_step(
         )
 
     # Invoke the agent
+    default_recursion_limit = 25
     try:
-        recursion_limit = int(os.getenv("AGENT_RECURSION_LIMIT", "25"))
-        print("Recursion limit is set:",recursion_limit)
+        env_value_str = os.getenv("AGENT_RECURSION_LIMIT", str(default_recursion_limit))
+        parsed_limit = int(env_value_str) 
+
+        if parsed_limit > 0:
+            recursion_limit = parsed_limit
+            logger.info(f"Recursion limit set to: {recursion_limit}")
+        else:
+            logger.warning(
+                f"AGENT_RECURSION_LIMIT value '{env_value_str}' (parsed as {parsed_limit}) is not positive. "
+                f"Using default value {default_recursion_limit}."
+            )
+            recursion_limit = default_recursion_limit
     except ValueError:
+        raw_env_value = os.getenv('AGENT_RECURSION_LIMIT')
         logger.warning(
-            f"Invalid AGENT_RECURSION_LIMIT value: {os.getenv('AGENT_RECURSION_LIMIT')}. Using default value 25."
+            f"Invalid AGENT_RECURSION_LIMIT value: '{raw_env_value}'. "
+            f"Using default value {default_recursion_limit}."
         )
-        recursion_limit = 25
+        recursion_limit = default_recursion_limit
 
     result = await agent.ainvoke(input=agent_input,config={"recursion_limit": recursion_limit})
     
