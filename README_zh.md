@@ -172,7 +172,7 @@ SEARCH_API=tavily
 ### 核心能力
 
 - 🤖 **LLM 集成**
-  - 通过[litellm](https://docs.litellm.ai/docs/providers)支持集成大多数模型
+  - 通过OpenAI兼容的API接口支持各种模型
   - 支持开源模型如 Qwen
   - 兼容 OpenAI 的 API 接口
   - 多层 LLM 系统适用于不同复杂度的任务
@@ -180,7 +180,6 @@ SEARCH_API=tavily
 ### 工具和 MCP 集成
 
 - 🔍 **搜索和检索**
-
   - 通过 Tavily、Brave Search 等进行网络搜索
   - 使用 Jina 进行爬取
   - 高级内容提取

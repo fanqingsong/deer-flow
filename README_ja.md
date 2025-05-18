@@ -172,7 +172,7 @@ SEARCH_API=tavily
 ### コア機能
 
 - 🤖 **LLM 統合**
-  - [litellm](https://docs.litellm.ai/docs/providers)を通じてほとんどのモデルの統合をサポート
+  - OpenAI互換のAPIインターフェースを通じて様々なモデルをサポート
   - Qwen などのオープンソースモデルをサポート
   - OpenAI 互換の API インターフェース
   - 異なるタスクの複雑さに対応するマルチティア LLM システム
@@ -180,7 +180,6 @@ SEARCH_API=tavily
 ### ツールと MCP 統合
 
 - 🔍 **検索と取得**
-
   - Tavily、Brave Search などを通じた Web 検索
   - Jina を使用したクローリング
   - 高度なコンテンツ抽出
