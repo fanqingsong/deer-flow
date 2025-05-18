@@ -10,7 +10,10 @@ import { LoadingAnimation } from "~/components/deer-flow/loading-animation";
 import { Markdown } from "~/components/deer-flow/markdown";
 import { RainbowText } from "~/components/deer-flow/rainbow-text";
 import { RollingText } from "~/components/deer-flow/rolling-text";
-import { ScrollContainer, type ScrollContainerRef } from "~/components/deer-flow/scroll-container";
+import {
+  ScrollContainer,
+  type ScrollContainerRef,
+} from "~/components/deer-flow/scroll-container";
 import { Tooltip } from "~/components/deer-flow/tooltip";
 import { Button } from "~/components/ui/button";
 import {
@@ -24,8 +27,11 @@ import type { Message, Option } from "~/core/messages";
 import {
   closeResearch,
   openResearch,
+  useLastFeedbackMessageId,
+  useLastInterruptMessage,
   useMessage,
-  useResearchTitle,
+  useMessageIds,
+  useResearchMessage,
   useStore,
 } from "~/core/store";
 import { parseJSON } from "~/core/utils";
@@ -44,27 +50,9 @@ export function MessageListView({
   ) => void;
 }) {
   const scrollContainerRef = useRef<ScrollContainerRef>(null);
-  const messageIds = useStore((state) => state.messageIds);
-  const interruptMessage = useStore((state) => {
-    if (messageIds.length >= 2) {
-      const lastMessage = state.messages.get(
-        messageIds[messageIds.length - 1]!,
-      );
-      return lastMessage?.finishReason === "interrupt" ? lastMessage : null;
-    }
-    return null;
-  });
-  const waitingForFeedbackMessageId = useStore((state) => {
-    if (messageIds.length >= 2) {
-      const lastMessage = state.messages.get(
-        messageIds[messageIds.length - 1]!,
-      );
-      if (lastMessage && lastMessage.finishReason === "interrupt") {
-        return state.messageIds[state.messageIds.length - 2];
-      }
-    }
-    return null;
-  });
+  const messageIds = useMessageIds();
+  const interruptMessage = useLastInterruptMessage();
+  const waitingForFeedbackMessageId = useLastFeedbackMessageId();
   const responding = useStore((state) => state.responding);
   const noOngoingResearch = useStore(
     (state) => state.ongoingResearchId === null,
@@ -81,7 +69,9 @@ export function MessageListView({
         scrollContainerRef.current.scrollToBottom();
       }
     }, 500);
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -119,7 +109,7 @@ function MessageListItem({
   interruptMessage,
   onFeedback,
   onSendMessage,
-  onToggleResearch
+  onToggleResearch,
 }: {
   className?: string;
   messageId: string;
@@ -133,9 +123,10 @@ function MessageListItem({
   onToggleResearch?: () => void;
 }) {
   const message = useMessage(messageId);
-  const startOfResearch = useStore((state) =>
-    state.researchIds.includes(messageId),
-  );
+  const researchIds = useStore((state) => state.researchIds);
+  const startOfResearch = useMemo(() => {
+    return researchIds.includes(messageId);
+  }, [researchIds, messageId]);
   if (message) {
     if (
       message.role === "user" ||
@@ -166,7 +157,10 @@ function MessageListItem({
       } else if (startOfResearch) {
         content = (
           <div className="w-full px-4">
-            <ResearchCard researchId={message.id} onToggleResearch={onToggleResearch} />
+            <ResearchCard
+              researchId={message.id}
+              onToggleResearch={onToggleResearch}
+            />
           </div>
         );
       } else {
@@ -206,90 +200,92 @@ function MessageListItem({
     }
     return null;
   }
+}
 
-  function MessageBubble({
-    className,
-    message,
-    children,
-  }: {
-    className?: string;
-    message: Message;
-    children: React.ReactNode;
-  }) {
-    return (
-      <div
-        className={cn(
-          `flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 shadow`,
-          message.role === "user" &&
+function MessageBubble({
+  className,
+  message,
+  children,
+}: {
+  className?: string;
+  message: Message;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        `flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 shadow`,
+        message.role === "user" &&
           "text-primary-foreground bg-brand rounded-ee-none",
-          message.role === "assistant" && "bg-card rounded-es-none",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    );
-  }
+        message.role === "assistant" && "bg-card rounded-es-none",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
-  function ResearchCard({
-    className,
-    researchId,
-    onToggleResearch
-  }: {
-    className?: string;
-    researchId: string;
-    onToggleResearch?: () => void;
-  }) {
-    const reportId = useStore((state) =>
-      state.researchReportIds.get(researchId),
-    );
-    const hasReport = useStore((state) =>
-      state.researchReportIds.has(researchId),
-    );
-    const reportGenerating = useStore(
-      (state) => hasReport && state.messages.get(reportId!)!.isStreaming,
-    );
-    const openResearchId = useStore((state) => state.openResearchId);
-    const state = useMemo(() => {
-      if (hasReport) {
-        return reportGenerating ? "Generating report..." : "Report generated";
-      }
-      return "Researching...";
-    }, [hasReport, reportGenerating]);
-    const title = useResearchTitle(researchId);
-    const handleOpen = useCallback(() => {
-      if (openResearchId === researchId) {
-        closeResearch();
-      } else {
-        openResearch(researchId);
-      }
-      onToggleResearch?.();
-    }, [openResearchId, researchId, onToggleResearch]);
-    return (
-      <Card className={cn("w-full", className)}>
-        <CardHeader>
-          <CardTitle>
-            <RainbowText animated={state !== "Report generated"}>
-              {title !== undefined && title !== "" ? title : "Deep Research"}
-            </RainbowText>
-          </CardTitle>
-        </CardHeader>
-        <CardFooter>
-          <div className="flex w-full">
-            <RollingText className="text-muted-foreground flex-grow text-sm">
-              {state}
-            </RollingText>
-            <Button
-              variant={!openResearchId ? "default" : "outline"}
-              onClick={handleOpen}
-            >
-              {researchId !== openResearchId ? "Open" : "Close"}
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    );
-  }
+function ResearchCard({
+  className,
+  researchId,
+  onToggleResearch,
+}: {
+  className?: string;
+  researchId: string;
+  onToggleResearch?: () => void;
+}) {
+  const reportId = useStore((state) => state.researchReportIds.get(researchId));
+  const hasReport = reportId !== undefined;
+  const reportGenerating = useStore(
+    (state) => hasReport && state.messages.get(reportId)!.isStreaming,
+  );
+  const openResearchId = useStore((state) => state.openResearchId);
+  const state = useMemo(() => {
+    if (hasReport) {
+      return reportGenerating ? "Generating report..." : "Report generated";
+    }
+    return "Researching...";
+  }, [hasReport, reportGenerating]);
+  const msg = useResearchMessage(researchId);
+  const title = useMemo(() => {
+    if (msg) {
+      return parseJSON(msg.content ?? "", { title: "" }).title;
+    }
+    return undefined;
+  }, [msg]);
+  const handleOpen = useCallback(() => {
+    if (openResearchId === researchId) {
+      closeResearch();
+    } else {
+      openResearch(researchId);
+    }
+    onToggleResearch?.();
+  }, [openResearchId, researchId, onToggleResearch]);
+  return (
+    <Card className={cn("w-full", className)}>
+      <CardHeader>
+        <CardTitle>
+          <RainbowText animated={state !== "Report generated"}>
+            {title !== undefined && title !== "" ? title : "Deep Research"}
+          </RainbowText>
+        </CardTitle>
+      </CardHeader>
+      <CardFooter>
+        <div className="flex w-full">
+          <RollingText className="text-muted-foreground flex-grow text-sm">
+            {state}
+          </RollingText>
+          <Button
+            variant={!openResearchId ? "default" : "outline"}
+            onClick={handleOpen}
+          >
+            {researchId !== openResearchId ? "Open" : "Close"}
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
 }
 
 const GREETINGS = ["Cool", "Sounds great", "Looks good", "Great", "Awesome"];
@@ -332,16 +328,17 @@ function PlanCard({
     <Card className={cn("w-full", className)}>
       <CardHeader>
         <CardTitle>
-          <Markdown animate>
-            {`### ${plan.title !== undefined && plan.title !== ""
-              ? plan.title
-              : "Deep Research"
-              }`}
+          <Markdown animated>
+            {`### ${
+              plan.title !== undefined && plan.title !== ""
+                ? plan.title
+                : "Deep Research"
+            }`}
           </Markdown>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Markdown className="opacity-80" animate>
+        <Markdown className="opacity-80" animated>
           {plan.thought}
         </Markdown>
         {plan.steps && (
@@ -349,10 +346,10 @@ function PlanCard({
             {plan.steps.map((step, i) => (
               <li key={`step-${i}`}>
                 <h3 className="mb text-lg font-medium">
-                  <Markdown animate>{step.title}</Markdown>
+                  <Markdown animated>{step.title}</Markdown>
                 </h3>
                 <div className="text-muted-foreground text-sm">
-                  <Markdown animate>{step.description}</Markdown>
+                  <Markdown animated>{step.description}</Markdown>
                 </div>
               </li>
             ))}
@@ -407,6 +404,9 @@ function PodcastCard({
   const isGenerating = useMemo(() => {
     return message.isStreaming;
   }, [message.isStreaming]);
+  const hasError = useMemo(() => {
+    return data?.error !== undefined;
+  }, [data]);
   const [isPlaying, setIsPlaying] = useState(false);
   return (
     <Card className={cn("w-[508px]", className)}>
@@ -414,15 +414,21 @@ function PodcastCard({
         <div className="text-muted-foreground flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             {isGenerating ? <LoadingOutlined /> : <Headphones size={16} />}
-            <RainbowText animated={isGenerating}>
-              {isGenerating
-                ? "Generating podcast..."
-                : isPlaying
-                  ? "Now playing podcast..."
-                  : "Podcast"}
-            </RainbowText>
+            {!hasError ? (
+              <RainbowText animated={isGenerating}>
+                {isGenerating
+                  ? "Generating podcast..."
+                  : isPlaying
+                    ? "Now playing podcast..."
+                    : "Podcast"}
+              </RainbowText>
+            ) : (
+              <div className="text-red-500">
+                Error when generating podcast. Please try again.
+              </div>
+            )}
           </div>
-          {!isGenerating && (
+          {!hasError && !isGenerating && (
             <div className="flex">
               <Tooltip title="Download podcast">
                 <Button variant="ghost" size="icon" asChild>
@@ -444,13 +450,17 @@ function PodcastCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <audio
-          className="w-full"
-          src={audioUrl}
-          controls
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-        />
+        {audioUrl ? (
+          <audio
+            className="w-full"
+            src={audioUrl}
+            controls
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+        ) : (
+          <div className="w-full"></div>
+        )}
       </CardContent>
     </Card>
   );
