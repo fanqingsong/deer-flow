@@ -15,6 +15,10 @@ from src.tools.tavily_search.tavily_search_results_with_images import (
     TavilySearchResultsWithImages,
 )
 
+from src.tools.searxng_search.searxng_search_api_wrapper import (
+    CustomSearxSearchResults
+)
+
 from src.tools.decorators import create_logged_tool
 
 logger = logging.getLogger(__name__)
@@ -55,16 +59,25 @@ arxiv_search_tool = LoggedArxivSearch(
     ),
 )
 
-LoggedSearxSearch = create_logged_tool(SearxSearchResults)
+LoggedSearxSearch = create_logged_tool(CustomSearxSearchResults)
 searx_search_tool = LoggedSearxSearch(
-    name="web_search",
-    wrapper = SearxSearchWrapper(
-        searx_host=os.getenv("SEARXNG_API_URL", "http://localhost:8081"),
-    ),
+        name="web_search",
+        wrapper=SearxSearchWrapper(
+            searx_host=os.getenv("SEARXNG_API_URL")
+        ),
+        max_results=SEARCH_MAX_RESULTS,
+        # kwargs={"language": "en"}
 )
 
 if __name__ == "__main__":
-    results = LoggedDuckDuckGoSearch(
-        name="web_search", max_results=SEARCH_MAX_RESULTS, output_format="list"
-    ).invoke("cute panda")
+    # results = LoggedDuckDuckGoSearch(
+    #     name="web_search", max_results=SEARCH_MAX_RESULTS, output_format="list"
+    # ).invoke("cute panda")
+    # results = LoggedSearxSearch(
+    #     name="web_search", max_results=SEARCH_MAX_RESULTS, output_format="list"
+    # ).invoke("cute panda")
+
+    # results = duckduckgo_search_tool.invoke("cute panda")
+    os.environ["SEARCH_API"] = "tavily"
+    results = tavily_search_tool.invoke("cute panda")
     print(json.dumps(results, indent=2, ensure_ascii=False))
