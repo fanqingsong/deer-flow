@@ -1,68 +1,90 @@
-import os
 import json
-from typing import Dict, List, Optional
-from src.tools.decorators import create_logged_tool
-from langchain_community.tools.searx_search.tool import SearxSearchResults
+from typing import Any, Dict, List, Optional
+
 from langchain_community.utilities import SearxSearchWrapper
+from langchain_community.tools.searx_search.tool import SearxSearchResults
+
+
+class CustomSearxSearchWrapper(SearxSearchWrapper):
+    """Custom SearxNG搜索包装器，返回标准化JSON格式结果"""
+    
+    def results(
+        self,
+        query: str,
+        num_results: int,
+        engines: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+        query_suffix: Optional[str] = "",
+        **kwargs: Any,
+    ) -> List[Dict]:
+        # 调用父类获取原始结果
+        raw_results = super().results(
+            query=query,
+            num_results=num_results,
+            engines=engines,
+            categories=categories,
+            query_suffix=query_suffix,
+            **kwargs
+        )
+        
+        # 转换结果格式
+        formatted_results = []
+        for result in raw_results:
+            formatted = {
+                "type": "page",  # 默认类型为网页
+                "title": result.get("title", ""),
+                "url": result.get("link", ""),    # 原始字段名为link
+                "content": result.get("snippet", ""),  # 原始字段名为snippet
+            }
+            formatted_results.append(formatted)
+        
+        return formatted_results
+
+    async def aresults(
+        self,
+        query: str,
+        num_results: int,
+        engines: Optional[List[str]] = None,
+        query_suffix: Optional[str] = "",
+        **kwargs: Any,
+    ) -> str:
+        """异步获取并格式化结果"""
+        raw_results = await super().aresults(
+            query=query,
+            num_results=num_results,
+            engines=engines,
+            query_suffix=query_suffix,
+            **kwargs
+        )
+        
+        # 转换异步结果格式
+        formatted_results = []
+        for result in raw_results:
+            formatted = {
+                "type": "page",
+                "title": result.get("title", ""),
+                "url": result.get("link", ""),
+                "content": result.get("snippet", ""),
+            }
+            formatted_results.append(formatted)
+        
+        return json.dumps(formatted_results, ensure_ascii=False)
+
 
 class CustomSearxSearchResults(SearxSearchResults):
-    def _parse_results(self, results: List[Dict]) -> List[Dict]:
-        """将原始SearxNG结果转换为标准格式"""
-        formatted = []
-        for result in results:
-            # 确保所有字符串字段使用双引号
-            formatted.append({
-                "type": "page",
-                "title": json.dumps(result.get("title", "")).strip('"'),
-                "url": json.dumps(result.get("link", "")).strip('"'),
-                "content": json.dumps(result.get("snippet", "")).strip('"'),
-                "score": float(result.get("score", 0.0)),
-                # 可选保留原始引擎信息
-                "metadata": {
-                    "engines": result.get("engines", []),
-                    "category": result.get("category", "")
-                }
-            })
-        return formatted
-
-    def _run(self, query: str, num_results: Optional[int] = 5, **kwargs: any) -> str:
-        """重写运行逻辑"""
-        # 获取原始结果
-        raw_results = self.wrapper.results(query, num_results, **kwargs)
-        
-        # 过滤无效结果
-        valid_results = [
-            r for r in raw_results if 
-            r.get("link") and 
-            r.get("snippet") and 
-            not r.get("link", "").startswith("http://localhost:8081")
-        ]
-        
-        # 格式转换
-        formatted = self._parse_results(valid_results)
-        
-        # 确保JSON双引号输出
-        return {
-                "query": query,
-                "number_of_results": len(formatted),
-                "results": formatted
-            }
-
-
-if __name__ == "__main__":
-  # 测试SearxNG搜索
-    os.environ["SEARCH_API"] = "searxng"
-    os.environ["SEARXNG_API_URL"] = "http://host.docker.internal:8081"
-
-    LoggedSearxSearch = create_logged_tool(CustomSearxSearchResults)
-    test_tool = LoggedSearxSearch(
-        name="test_search",
-        wrapper=SearxSearchWrapper(
-            searx_host=os.getenv("SEARXNG_API_URL")
-        ),
-        max_results=3,
-        kwargs={"language": "en"}
-    )
+    """支持JSON格式输出的SearxNG搜索工具"""
     
-    results = test_tool.invoke("deepseek")
-    print(json.dumps(json.loads(results), indent=2, ensure_ascii=False))
+    def _run(self, query: str) -> str:
+        """同步执行搜索并返回JSON字符串"""
+        results = self.wrapper.results(
+            query=query,
+            num_results=self.kwargs.get("num_results", 5)
+        )
+        return json.dumps(results, ensure_ascii=False)
+
+    async def _arun(self, query: str) -> str:
+        """异步执行搜索并返回JSON字符串"""
+        return await self.wrapper.aresults(
+            query=query,
+            num_results=self.kwargs.get("num_results", 5)
+        )

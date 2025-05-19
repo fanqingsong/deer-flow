@@ -20,7 +20,6 @@ export const Link = ({
     if (!checkLinkCredibility) return links;
 
     (toolCalls || []).forEach((call) => {
-      console.log(call)
       if (call && call.name === "web_search" && call.result) {
         const result = JSON.parse(call.result) as Array<{ url: string }>;
         result.forEach((r) => {
