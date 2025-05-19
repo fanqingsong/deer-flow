@@ -143,14 +143,14 @@ DeerFlow 支持多种搜索引擎，可以在`.env`文件中通过`SEARCH_API`�
 
 - **Tavily**（默认）：专为 AI 应用设计的专业搜索 API
   - 需要在`.env`文件中设置`TAVILY_API_KEY`
-  - 注册地址：https://app.tavily.com/home
+  - 注册地址：<https://app.tavily.com/home>
 
 - **DuckDuckGo**：注重隐私的搜索引擎
   - 无需 API 密钥
 
 - **Brave Search**：具有高级功能的注重隐私的搜索引擎
   - 需要在`.env`文件中设置`BRAVE_SEARCH_API_KEY`
-  - 注册地址：https://brave.com/search/api/
+  - 注册地址：<https://brave.com/search/api/>
 
 - **Arxiv**：用于学术研究的科学论文搜索
   - 无需 API 密钥
@@ -313,9 +313,9 @@ langgraph dev
 
 启动 LangGraph 服务器后，您将在终端中看到几个 URL：
 
-- API: http://127.0.0.1:2024
-- Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
-- API 文档：http://127.0.0.1:2024/docs
+- API: <http://127.0.0.1:2024>
+- Studio UI: <https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024>
+- API 文档：<http://127.0.0.1:2024/docs>
 
 在浏览器中打开 Studio UI 链接以访问调试界面。
 
@@ -341,6 +341,7 @@ langgraph dev
 DeerFlow 支持 LangSmith 追踪功能，帮助您调试和监控工作流。要启用 LangSmith 追踪：
 
 1. 确保您的 `.env` 文件中有以下配置（参见 `.env.example`）：
+
    ```bash
    LANGSMITH_TRACING=true
    LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
@@ -349,6 +350,7 @@ DeerFlow 支持 LangSmith 追踪功能，帮助您调试和监控工作流。要
    ```
 
 2. 通过运行以下命令本地启动 LangSmith 追踪：
+
    ```bash
    langgraph dev
    ```
@@ -391,7 +393,7 @@ docker compose up
 
 ## 文本转语音集成
 
-DeerFlow 现在包含一个文本转语音(TTS)功能，允许您将研究报告转换为语音。此功能使用火山引擎 TTS API 生成高质量的文本音频。速度、音量和音调等特性也可以自定义。
+DeerFlow 现在包含一个文本转语音 (TTS) 功能，允许您将研究报告转换为语音。此功能使用火山引擎 TTS API 生成高质量的文本音频。速度、音量和音调等特性也可以自定义。
 
 ### 使用 TTS API
 

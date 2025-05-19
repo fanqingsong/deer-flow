@@ -347,6 +347,7 @@ Studio UIで研究トピックを送信すると、次を含む全ワークフ�
 DeerFlow は LangSmith トレース機能をサポートしており、ワークフローのデバッグとモニタリングに役立ちます。LangSmith トレースを有効にするには：
 
 1. `.env` ファイルに次の設定があることを確認してください（`.env.example` を参照）：
+
    ```bash
    LANGSMITH_TRACING=true
    LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
@@ -355,6 +356,7 @@ DeerFlow は LangSmith トレース機能をサポートしており、ワーク
    ```
 
 2. 次のコマンドを実行して LangSmith トレースを開始します：
+
    ```bash
    langgraph dev
    ```
