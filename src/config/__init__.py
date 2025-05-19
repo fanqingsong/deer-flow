@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
 # SPDX-License-Identifier: MIT
 
-from .tools import SEARCH_MAX_RESULTS, SELECTED_SEARCH_ENGINE, SearchEngine
+from .tools import SELECTED_SEARCH_ENGINE, SearchEngine
 from .questions import BUILT_IN_QUESTIONS, BUILT_IN_QUESTIONS_ZH_CN
 
 from dotenv import load_dotenv
@@ -41,7 +41,6 @@ __all__ = [
     # Other configurations
     "TEAM_MEMBERS",
     "TEAM_MEMBER_CONFIGURATIONS",
-    "SEARCH_MAX_RESULTS",
     "SELECTED_SEARCH_ENGINE",
     "SearchEngine",
     "BUILT_IN_QUESTIONS",
