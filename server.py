@@ -19,10 +19,12 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 def handle_shutdown(signum, frame):
     """Handle graceful shutdown on SIGTERM/SIGINT"""
     logger.info("Received shutdown signal. Starting graceful shutdown...")
     sys.exit(0)
+
 
 # Register signal handlers
 signal.signal(signal.SIGTERM, handle_shutdown)
