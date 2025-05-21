@@ -19,6 +19,7 @@ from src.tools import (
     get_web_search_tool,
     python_repl_tool,
 )
+from src.tools.custom_api import create_custom_api_tools_from_config
 
 from src.config.agents import AGENT_LLM_MAP
 from src.config.configuration import Configuration
@@ -454,11 +455,30 @@ async def _setup_and_execute_agent_step(
                         f"Powered by '{enabled_tools[tool.name]}'.\n{tool.description}"
                     )
                     loaded_tools.append(tool)
+            
+            # Add custom API tools
+            if configurable.custom_api_configs:
+                custom_tools = create_custom_api_tools_from_config(
+                    configurable.custom_api_configs, logger_instance=logger
+                )
+                if custom_tools:
+                    loaded_tools.extend(custom_tools)
+                    logger.info(f"Added {len(custom_tools)} custom API tools for {agent_type} agent.")
+
             agent = create_agent(agent_type, agent_type, loaded_tools, agent_type)
             return await _execute_agent_step(state, agent, agent_type)
     else:
         # Use default tools if no MCP servers are configured
-        agent = create_agent(agent_type, agent_type, default_tools, agent_type)
+        loaded_tools = default_tools[:] # Start with default tools
+        if configurable.custom_api_configs:
+            custom_tools = create_custom_api_tools_from_config(
+                configurable.custom_api_configs, logger_instance=logger
+            )
+            if custom_tools:
+                loaded_tools.extend(custom_tools)
+                logger.info(f"Added {len(custom_tools)} custom API tools for {agent_type} agent (no MCP).")
+        
+        agent = create_agent(agent_type, agent_type, loaded_tools, agent_type)
         return await _execute_agent_step(state, agent, agent_type)
 
 

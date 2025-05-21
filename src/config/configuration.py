@@ -3,7 +3,7 @@
 
 import os
 from dataclasses import dataclass, fields
-from typing import Any, Optional
+from typing import Any, Optional, list
 
 from langchain_core.runnables import RunnableConfig
 
@@ -16,6 +16,7 @@ class Configuration:
     max_step_num: int = 3  # Maximum number of steps in a plan
     max_search_results: int = 3  # Maximum number of search results
     mcp_settings: dict = None  # MCP settings, including dynamic loaded tools
+    custom_api_configs: Optional[list[dict]] = None  # Custom API configurations
 
     @classmethod
     def from_runnable_config(

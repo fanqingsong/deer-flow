@@ -7,3 +7,34 @@ BASIC_MODEL:
   base_url: https://ark.cn-beijing.volces.com/api/v3
   model: "doubao-1-5-pro-32k-250115"
   api_key: xxxx
+
+# Custom API configurations
+# This section allows you to define custom APIs that can be used as tools.
+# Each item in the list represents a custom API configuration.
+#
+# - name: A unique name for the custom API tool.
+# - description: A description of what the API does, used by the AI to decide when to use it.
+# - url: The base URL of the API endpoint. Path parameters can be included using curly braces (e.g., {user_id}).
+# - method: The HTTP method for the API request (e.g., GET, POST, PUT, DELETE).
+# - headers: A dictionary of HTTP headers to include in the request. Values can be environment variables (e.g., "$CUSTOM_API_KEY").
+# - query_params: A dictionary of query parameters to include in the request.
+# - body_template: (Optional) A JSON string or dictionary representing the request body, for methods like POST or PUT.
+#                  You can use placeholders like "{user_input}" that will be filled in at runtime.
+# - response_mapping: (Optional) Defines how to extract and transform data from the API response.
+#   - Keys are the names of the fields to be extracted.
+#   - Values are JSONPath expressions to locate the data in the response (e.g., "data.name").
+
+custom_api_configs:
+  - name: "my_custom_api"
+    description: "Fetches user data from a custom endpoint."
+    url: "https://api.example.com/users/{user_id}" # Example with path parameter
+    method: "GET" # (GET, POST, PUT, DELETE, etc.)
+    headers:
+      X-API-Key: "$CUSTOM_API_KEY" # Example of using an environment variable
+      Content-Type: "application/json"
+    query_params:
+      active: "true"
+    # body_template: null # or example for POST: { "query": "{user_input}" }
+    # response_mapping: # Optional: defines how to extract/transform data
+    #   user_name: "data.name"
+    #   user_email: "data.email"
