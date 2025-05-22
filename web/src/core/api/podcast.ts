@@ -4,7 +4,7 @@
 import { resolveServiceURL } from "./resolve-service-url";
 
 export async function generatePodcast(content: string) {
-  const url = await resolveServiceURL("/api/prose/generate");
+  const url = await resolveServiceURL("podcast/generate");
   const response = await fetch(url, {
     method: "post",
     headers: {
