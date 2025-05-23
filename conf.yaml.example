@@ -4,7 +4,6 @@
 # - Replace `base_url` and `model` name if you want to use a custom model
 
 BASIC_MODEL:
-BASIC_MODEL:
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   model: "qwen-max-latest"
   api_key: ""
