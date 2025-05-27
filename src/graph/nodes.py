@@ -50,7 +50,7 @@ def background_investigation_node(
     logger.info("background investigation node is running.")
     configurable = Configuration.from_runnable_config(config)
     query = state["messages"][-1].content
-    if SELECTED_SEARCH_ENGINE == SearchEngine.TAVILY:
+    if SELECTED_SEARCH_ENGINE == SearchEngine.TAVILY.value:
         searched_content = LoggedTavilySearch(
             max_results=configurable.max_search_results
         ).invoke({"query": query})
