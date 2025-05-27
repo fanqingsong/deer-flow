@@ -1,8 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { Resource } from "~/core/messages";
+import { cn } from "~/lib/utils";
 
 export interface ResourceMentionsProps {
-  items: string[];
-  command: (item: { id: string }) => void;
+  items: Array<Resource>;
+  command: (item: { id: string; label: string }) => void;
 }
 
 export const ResourceMentions = forwardRef<
@@ -15,7 +17,7 @@ export const ResourceMentions = forwardRef<
     const item = props.items[index];
 
     if (item) {
-      props.command({ id: item });
+      props.command({ id: item.uri, label: item.title });
     }
   };
 
@@ -57,19 +59,24 @@ export const ResourceMentions = forwardRef<
   }));
 
   return (
-    <div className="dropdown-menu">
+    <div className="relative flex flex-col gap-0.5 overflow-auto rounded-md border border-gray-100 bg-white p-1 shadow">
       {props.items.length ? (
         props.items.map((item, index) => (
           <button
-            className={index === selectedIndex ? "is-selected" : ""}
+            className={cn(
+              "flex w-full items-center gap-1 rounded-sm px-1 py-0.5 text-sm hover:bg-gray-100",
+              selectedIndex === index && "bg-gray-50",
+            )}
             key={index}
             onClick={() => selectItem(index)}
           >
-            {item}
+            {item.title}
           </button>
         ))
       ) : (
-        <div className="item">No result</div>
+        <div className="items-center justify-center text-gray-500">
+          No result
+        </div>
       )}
     </div>
   );

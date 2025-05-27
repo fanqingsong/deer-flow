@@ -6,38 +6,21 @@ import {
 } from "./resource-mentions";
 import type { Instance, Props } from "tippy.js";
 import tippy from "tippy.js";
+import { resolveServiceURL } from "~/core/api/resolve-service-url";
+import type { Resource } from "~/core/messages";
 
 export const resourceSuggestion: MentionOptions["suggestion"] = {
   items: ({ query }) => {
-    return [
-      "Lea Thompson",
-      "Cyndi Lauper",
-      "Tom Cruise",
-      "Madonna",
-      "Jerry Hall",
-      "Joan Collins",
-      "Winona Ryder",
-      "Christina Applegate",
-      "Alyssa Milano",
-      "Molly Ringwald",
-      "Ally Sheedy",
-      "Debbie Harry",
-      "Olivia Newton-John",
-      "Elton John",
-      "Michael J. Fox",
-      "Axl Rose",
-      "Emilio Estevez",
-      "Ralph Macchio",
-      "Rob Lowe",
-      "Jennifer Grey",
-      "Mickey Rourke",
-      "John Cusack",
-      "Matthew Broderick",
-      "Justine Bateman",
-      "Lisa Bonet",
-    ]
-      .filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
-      .slice(0, 5);
+    return fetch(resolveServiceURL(`rag/resources?query=${query}`), {
+      method: "GET",
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        return res.resources as Array<Resource>;
+      })
+      .catch((err) => {
+        return [];
+      });
   },
 
   render: () => {
