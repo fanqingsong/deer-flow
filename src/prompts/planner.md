@@ -159,7 +159,7 @@ Directly output the raw JSON format of `Plan` without "```json". The `Plan` inte
 interface Step {
   need_search: boolean; // Must be explicitly set for each step
   title: string;
-  description: string; // Specify exactly what data to collect
+  description: string; // Specify exactly what data to collect. If the user input contains a link, please retain the full Markdown format when necessary.
   step_type: "research" | "processing"; // Indicates the nature of the step
 }
 

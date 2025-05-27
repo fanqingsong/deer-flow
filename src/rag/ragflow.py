@@ -49,6 +49,7 @@ class RAGFlowProvider(Retriever):
             "question": query,
             "dataset_ids": dataset_ids,
             "document_ids": document_ids,
+            "page_size": self.page_size,
         }
 
         response = requests.post(
