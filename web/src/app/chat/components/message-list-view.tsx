@@ -175,7 +175,10 @@ function MessageListItem({
             <MessageBubble message={message}>
               <div className="flex w-full flex-col">
                 <Markdown
-                  className={cn(message.role === "user" && "prose-invert")}
+                  className={cn(
+                    message.role === "user" &&
+                      "prose-invert not-dark:text-secondary dark:text-inherit",
+                  )}
                 >
                   {message?.content}
                 </Markdown>
@@ -219,8 +222,7 @@ function MessageBubble({
     <div
       className={cn(
         `group flex w-fit max-w-[85%] flex-col rounded-2xl px-4 py-3 text-nowrap shadow`,
-        message.role === "user" &&
-          "text-primary-foreground bg-brand rounded-ee-none",
+        message.role === "user" && "bg-brand rounded-ee-none",
         message.role === "assistant" && "bg-card rounded-es-none",
         className,
       )}

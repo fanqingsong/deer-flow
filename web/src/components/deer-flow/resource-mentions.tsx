@@ -59,13 +59,14 @@ export const ResourceMentions = forwardRef<
   }));
 
   return (
-    <div className="relative flex flex-col gap-0.5 overflow-auto rounded-md border border-gray-100 bg-white p-1 shadow">
+    <div className="bg-card border-var(--border) relative flex flex-col gap-1 overflow-auto rounded-md border p-2 shadow">
       {props.items.length ? (
         props.items.map((item, index) => (
           <button
             className={cn(
-              "flex w-full items-center gap-1 rounded-sm px-1 py-0.5 text-sm hover:bg-gray-100",
-              selectedIndex === index && "bg-gray-50",
+              "focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-full items-center justify-start gap-2 rounded-md px-4 py-2 text-sm whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+              selectedIndex === index &&
+                "bg-secondary text-secondary-foreground",
             )}
             key={index}
             onClick={() => selectItem(index)}
