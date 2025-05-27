@@ -12,7 +12,7 @@ You have access to two types of tools:
 
 1. **Built-in Tools**: These are always available:
    {% if resources %}
-   - **local_search_tool**: For retrieving information from the local knowledge base when user provided the resource list.
+   - **local_search_tool**: For retrieving information from the local knowledge base when user mentioned in the messages.
    {% endif %}
    - **web_search_tool**: For performing web searches
    - **crawl_tool**: For reading content from URLs
