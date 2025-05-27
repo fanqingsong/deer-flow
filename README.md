@@ -189,6 +189,14 @@ SEARCH_API=tavily
   - Crawling with Jina
   - Advanced content extraction
 
+- 📃 **RAG Integration**
+
+  - Supports mentioning files from [RAGFlow](https://github.com/infiniflow/ragflow) within the input box
+
+  ```bash
+   RAG_PROVIDER=ragflow
+  ```
+
 - 🔗 **MCP Seamless Integration**
   - Expand capabilities for private domain access, knowledge graph, web browsing and more
   - Facilitates integration of diverse research tools and methodologies
@@ -352,6 +360,7 @@ When you submit a research topic in the Studio UI, you'll be able to see the ent
 DeerFlow supports LangSmith tracing to help you debug and monitor your workflows. To enable LangSmith tracing:
 
 1. Make sure your `.env` file has the following configurations (see `.env.example`):
+
    ```bash
    LANGSMITH_TRACING=true
    LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
