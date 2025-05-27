@@ -350,13 +350,15 @@ async def _execute_agent_step(
     # Add citation reminder for researcher agent
     if agent_name == "researcher":
         if state.get("resources"):
-            resources_info = "# Private knowledge base resource list\n\n"
+            resources_info = "**The user mentioned the following resource files:**\n\n"
             for resource in state.get("resources"):
                 resources_info += f"- {resource.title} ({resource.description})\n"
 
             agent_input["messages"].append(
                 HumanMessage(
-                    content=resources_info,
+                    content=resources_info
+                    + "\n\n"
+                    + "You MUST use the **local_search_tool** to retrieve the information from the resource files.",
                 )
             )
 

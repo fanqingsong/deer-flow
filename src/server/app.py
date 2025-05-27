@@ -111,13 +111,7 @@ async def _astream_workflow_generator(
         input_,
         config={
             "thread_id": thread_id,
-            "resources": [
-                Resource(
-                    uri="ragflow://dataset/a81a27e636bb11f09720c290d4b6a7f0",
-                    title="奔驰汽车用户使用手册",
-                    description="奔驰汽车用户使用手册",
-                )
-            ],
+            "resources": resources,
             "max_plan_iterations": max_plan_iterations,
             "max_step_num": max_step_num,
             "max_search_results": max_search_results,
