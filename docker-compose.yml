@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: deer-flow-backend
-    ports:
+    expose:
       - "8000:8000"
     env_file:
       - .env
@@ -32,6 +32,20 @@ services:
       - deer-flow-network
     volumes:
       - ./config.json:/app/public/config.json
+
+  nginx:
+    image: nginx:alpine
+    container_name: ssl-proxy
+    ports:
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - deer-flow-network
 
 networks:
   deer-flow-network:
