@@ -179,6 +179,7 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
                 class:
                   "prose prose-base dark:prose-invert inline-editor font-default focus:outline-none max-w-full",
               },
+              transformPastedHTML: transformPastedHTML,
             }}
             onCreate={({ editor }) => {
               editorRef.current = editor;
@@ -192,5 +193,19 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
     );
   },
 );
+
+function transformPastedHTML(html: string) {
+  try {
+    // Strip HTML from user-pasted content
+    const tempEl = document.createElement("div");
+    tempEl.innerHTML = html;
+
+    return tempEl.textContent || tempEl.innerText || "";
+  } catch (error) {
+    console.error("Error transforming pasted HTML", error);
+
+    return "";
+  }
+}
 
 export default MessageInput;
