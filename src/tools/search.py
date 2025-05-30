@@ -31,7 +31,7 @@ LoggedTavilySearch = create_logged_tool(TavilySearchResultsWithImages)
 LoggedDuckDuckGoSearch = create_logged_tool(DuckDuckGoSearchResults)
 LoggedBraveSearch = create_logged_tool(BraveSearch)
 LoggedArxivSearch = create_logged_tool(ArxivQueryRun)
-LoggedSearxngSearch = create_logged_tool(SearxSearchRun)
+LoggedSearxSearch = create_logged_tool(SearxSearchRun)
 
 
 # Get the selected search tool
@@ -64,7 +64,7 @@ def get_web_search_tool(max_search_results: int):
             ),
         )
     elif SELECTED_SEARCH_ENGINE == SearchEngine.SEARX.value:
-        return LoggedSearxngSearch(
+        return LoggedSearxSearch(
             name="web_search",
             wrapper=SearxSearchWrapper(
                 k=max_search_results,
