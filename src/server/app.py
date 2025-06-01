@@ -273,7 +273,7 @@ async def generate_ppt(request: GeneratePPTRequest):
 @app.post("/api/prose/generate")
 async def generate_prose(request: GenerateProseRequest):
     try:
-        sanitized_prompt = request.prompt.replace('\r\n','').replace('\n','')
+        sanitized_prompt = request.prompt.replace("\r\n", "").replace("\n", "")
         logger.info(f"Generating prose for prompt: {sanitized_prompt}")
         workflow = build_prose_graph()
         events = workflow.astream(
