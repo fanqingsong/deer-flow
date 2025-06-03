@@ -4,6 +4,8 @@
 from pathlib import Path
 from typing import Any, Dict
 import os
+import ssl
+import httpx
 
 from langchain_openai import ChatOpenAI
 
@@ -12,6 +14,12 @@ from src.config.agents import LLMType
 
 # Cache for LLM instances
 _llm_cache: dict[LLMType, ChatOpenAI] = {}
+
+
+def clear_llm_cache():
+    """Clear the LLM cache. Useful for testing or when configuration changes."""
+    global _llm_cache
+    _llm_cache.clear()
 
 
 def _get_env_llm_conf(llm_type: str) -> Dict[str, Any]:
@@ -46,6 +54,22 @@ def _create_llm_use_conf(llm_type: LLMType, conf: Dict[str, Any]) -> ChatOpenAI:
 
     if not merged_conf:
         raise ValueError(f"Unknown LLM Conf: {llm_type}")
+
+    # Handle SSL verification settings
+    verify_ssl = merged_conf.pop("verify_ssl", True)
+    
+    # Create custom HTTP client if SSL verification is disabled
+    if not verify_ssl:
+        # Create SSL context that doesn't verify certificates
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
+        # Create httpx clients with disabled SSL verification for both sync and async operations
+        http_client = httpx.Client(verify=False)
+        http_async_client = httpx.AsyncClient(verify=False)
+        merged_conf["http_client"] = http_client
+        merged_conf["http_async_client"] = http_async_client
 
     return ChatOpenAI(**merged_conf)
 
