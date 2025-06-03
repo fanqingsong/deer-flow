@@ -73,11 +73,6 @@ BASIC_MODEL:
 > [!WARNING]
 > Disabling SSL certificate verification reduces security and should only be used in development environments or when you trust the LLM server. In production environments, it's recommended to use properly signed SSL certificates.
 
-You can also set this via environment variables:
-```bash
-export BASIC_MODEL__verify_ssl=false
-```
-
 ### How to use Ollama models?
 
 DeerFlow supports the integration of Ollama models. You can refer to [litellm Ollama](https://docs.litellm.ai/docs/providers/ollama). <br>
