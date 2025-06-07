@@ -10,7 +10,6 @@ import builtins
 import importlib
 from src.config.configuration import Configuration
 
-
 # Patch sys.path so relative import works
 
 # Patch Resource for import
