@@ -49,12 +49,16 @@ export function ReportStyleDialog() {
   const [open, setOpen] = useState(false);
   const currentStyle = useSettingsStore((state) => state.general.reportStyle);
 
-  const handleStyleChange = (style: "academic" | "popular_science" | "news" | "social_media") => {
+  const handleStyleChange = (
+    style: "academic" | "popular_science" | "news" | "social_media",
+  ) => {
     setReportStyle(style);
     setOpen(false);
   };
 
-  const currentStyleConfig = REPORT_STYLES.find(style => style.value === currentStyle) || REPORT_STYLES[0];
+  const currentStyleConfig =
+    REPORT_STYLES.find((style) => style.value === currentStyle) ||
+    REPORT_STYLES[0]!;
   const CurrentIcon = currentStyleConfig.icon;
 
   return (
@@ -67,18 +71,15 @@ export function ReportStyleDialog() {
               Writing Style: {currentStyleConfig.label}
             </h3>
             <p>
-              Choose the writing style for your research reports. Different styles
-              are optimized for different audiences and purposes.
+              Choose the writing style for your research reports. Different
+              styles are optimized for different audiences and purposes.
             </p>
           </div>
         }
       >
         <DialogTrigger asChild>
           <Button
-            className={cn(
-              "rounded-2xl",
-              currentStyle !== "academic" && "!border-brand !text-brand"
-            )}
+            className="!border-brand !text-brand rounded-2xl"
             variant="outline"
           >
             <CurrentIcon className="h-4 w-4" /> {currentStyleConfig.label}
@@ -89,20 +90,21 @@ export function ReportStyleDialog() {
         <DialogHeader>
           <DialogTitle>Choose Writing Style</DialogTitle>
           <DialogDescription>
-            Select the writing style for your research reports. Each style is optimized for different audiences and purposes.
+            Select the writing style for your research reports. Each style is
+            optimized for different audiences and purposes.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-4">
           {REPORT_STYLES.map((style) => {
             const Icon = style.icon;
             const isSelected = currentStyle === style.value;
-            
+
             return (
               <button
                 key={style.value}
                 className={cn(
-                  "flex items-start gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-accent",
-                  isSelected && "border-primary bg-accent"
+                  "hover:bg-accent flex items-start gap-3 rounded-lg border p-4 text-left transition-colors",
+                  isSelected && "border-primary bg-accent",
                 )}
                 onClick={() => handleStyleChange(style.value)}
               >
@@ -110,9 +112,9 @@ export function ReportStyleDialog() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-medium">{style.label}</h4>
-                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    {isSelected && <Check className="text-primary h-4 w-4" />}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {style.description}
                   </p>
                 </div>
