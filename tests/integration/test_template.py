@@ -139,7 +139,10 @@ def test_apply_prompt_template_reporter():
     }
     messages_default = apply_prompt_template("reporter", test_state_default)
     system_content_default = messages_default[0]["content"]
-    assert "You are a professional reporter responsible for writing clear, comprehensive reports" in system_content_default
+    assert (
+        "You are a professional reporter responsible for writing clear, comprehensive reports"
+        in system_content_default
+    )
     assert "Report Structure" in system_content_default
     assert "Title" in system_content_default
     assert "Key Points" in system_content_default
