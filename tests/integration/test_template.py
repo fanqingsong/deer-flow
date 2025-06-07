@@ -106,3 +106,44 @@ def test_current_time_format():
     assert any(
         line.strip().startswith("CURRENT_TIME:") for line in system_content.split("\n")
     )
+
+
+def test_apply_prompt_template_reporter():
+    """Test reporter template rendering with different styles and locale"""
+
+    test_state_news = {
+        "messages": [],
+        "task": "test reporter task",
+        "workspace_context": "test reporter context",
+        "report_style": "news",
+        "locale": "en-US",
+    }
+    messages_news = apply_prompt_template("reporter", test_state_news)
+    system_content_news = messages_news[0]["content"]
+
+    assert "You are a professional news reporter" in system_content_news
+    assert "Report Structure" in system_content_news
+    assert "Title" in system_content_news
+    assert "Key Points" in system_content_news
+    assert "Overview" in system_content_news
+    assert "Detailed Analysis" in system_content_news
+    assert "Survey Note" in system_content_news
+    assert "Key Citations" in system_content_news
+
+    test_state_default = {
+        "messages": [],
+        "task": "test reporter task",
+        "workspace_context": "test reporter context",
+        "report_style": "others",
+        "locale": "en-US",
+    }
+    messages_default = apply_prompt_template("reporter", test_state_default)
+    system_content_default = messages_default[0]["content"]
+    assert "You are a professional reporter responsible for writing clear, comprehensive reports" in system_content_default
+    assert "Report Structure" in system_content_default
+    assert "Title" in system_content_default
+    assert "Key Points" in system_content_default
+    assert "Overview" in system_content_default
+    assert "Detailed Analysis" in system_content_default
+    assert "Survey Note" in system_content_default
+    assert "Key Citations" in system_content_default
