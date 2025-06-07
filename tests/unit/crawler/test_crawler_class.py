@@ -33,6 +33,7 @@ def test_crawler_sets_article_url(monkeypatch):
     url = "http://example.com"
     article = crawler.crawl(url)
     assert article.url == url
+    assert article.to_markdown() == "# Dummy"
 
 
 def test_crawler_calls_dependencies(monkeypatch):
