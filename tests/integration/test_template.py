@@ -120,33 +120,26 @@ def test_apply_prompt_template_reporter():
     }
     messages_news = apply_prompt_template("reporter", test_state_news)
     system_content_news = messages_news[0]["content"]
+    assert "NBC News" in system_content_news
 
-    assert "You are a professional news reporter" in system_content_news
-    assert "Report Structure" in system_content_news
-    assert "Title" in system_content_news
-    assert "Key Points" in system_content_news
-    assert "Overview" in system_content_news
-    assert "Detailed Analysis" in system_content_news
-    assert "Survey Note" in system_content_news
-    assert "Key Citations" in system_content_news
-
-    test_state_default = {
+    test_state_social_media_en = {
         "messages": [],
         "task": "test reporter task",
         "workspace_context": "test reporter context",
-        "report_style": "others",
+        "report_style": "social_media",
         "locale": "en-US",
     }
-    messages_default = apply_prompt_template("reporter", test_state_default)
+    messages_default = apply_prompt_template("reporter", test_state_social_media_en)
     system_content_default = messages_default[0]["content"]
-    assert (
-        "You are a professional reporter responsible for writing clear, comprehensive reports"
-        in system_content_default
-    )
-    assert "Report Structure" in system_content_default
-    assert "Title" in system_content_default
-    assert "Key Points" in system_content_default
-    assert "Overview" in system_content_default
-    assert "Detailed Analysis" in system_content_default
-    assert "Survey Note" in system_content_default
-    assert "Key Citations" in system_content_default
+    assert "Twitter/X" in system_content_default
+
+    test_state_social_media_cn = {
+        "messages": [],
+        "task": "test reporter task",
+        "workspace_context": "test reporter context",
+        "report_style": "social_media",
+        "locale": "zh-CN",
+    }
+    messages_cn = apply_prompt_template("reporter", test_state_social_media_cn)
+    system_content_cn = messages_cn[0]["content"]
+    assert "小红书" in system_content_cn
