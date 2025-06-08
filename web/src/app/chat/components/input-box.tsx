@@ -12,13 +12,13 @@ import MessageInput, {
 import { ReportStyleDialog } from "~/components/deer-flow/report-style-dialog";
 import { Tooltip } from "~/components/deer-flow/tooltip";
 import { Button } from "~/components/ui/button";
+import { enhancePrompt } from "~/core/api";
 import type { Option, Resource } from "~/core/messages";
 import {
   setEnableBackgroundInvestigation,
   useSettingsStore,
 } from "~/core/store";
 import { cn } from "~/lib/utils";
-import { enhancePrompt } from "~/core/api";
 
 export function InputBox({
   className,
@@ -45,9 +45,7 @@ export function InputBox({
   const backgroundInvestigation = useSettingsStore(
     (state) => state.general.enableBackgroundInvestigation,
   );
-  const reportStyle = useSettingsStore(
-    (state) => state.general.reportStyle,
-  );
+  const reportStyle = useSettingsStore((state) => state.general.reportStyle);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<MessageInputRef>(null);
   const feedbackRef = useRef<HTMLDivElement>(null);
@@ -90,11 +88,11 @@ export function InputBox({
     try {
       const enhancedPrompt = await enhancePrompt({
         prompt: currentPrompt,
-        report_style: reportStyle.toUpperCase()
+        report_style: reportStyle.toUpperCase(),
       });
 
       // Add a small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Update the input with the enhanced prompt with animation
       if (inputRef.current) {
@@ -106,7 +104,6 @@ export function InputBox({
       setTimeout(() => {
         setIsEnhanceAnimating(false);
       }, 1000);
-
     } catch (error) {
       console.error("Failed to enhance prompt:", error);
       setIsEnhanceAnimating(false);
@@ -114,7 +111,7 @@ export function InputBox({
     } finally {
       setIsEnhancing(false);
     }
-  }, [currentPrompt, isEnhancing]);
+  }, [currentPrompt, isEnhancing, reportStyle]);
 
   return (
     <div
@@ -147,7 +144,7 @@ export function InputBox({
           )}
           {isEnhanceAnimating && (
             <motion.div
-              className="absolute inset-0 pointer-events-none z-20"
+              className="pointer-events-none absolute inset-0 z-20"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -156,13 +153,13 @@ export function InputBox({
               <div className="relative h-full w-full">
                 {/* Sparkle effect overlay */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-[24px]"
+                  className="absolute inset-0 rounded-[24px] bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10"
                   animate={{
                     background: [
                       "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1))",
                       "linear-gradient(225deg, rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))",
-                      "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1))"
-                    ]
+                      "linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1))",
+                    ],
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
@@ -170,7 +167,7 @@ export function InputBox({
                 {[...Array(6)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-2 h-2 bg-blue-400 rounded-full"
+                    className="absolute h-2 w-2 rounded-full bg-blue-400"
                     style={{
                       left: `${20 + i * 12}%`,
                       top: `${30 + (i % 2) * 40}%`,
@@ -195,7 +192,7 @@ export function InputBox({
           className={cn(
             "h-24 px-4 pt-5",
             feedback && "pt-9",
-            isEnhanceAnimating && "transition-all duration-500"
+            isEnhanceAnimating && "transition-all duration-500",
           )}
           ref={inputRef}
           onEnter={handleSendMessage}
@@ -240,15 +237,15 @@ export function InputBox({
               variant="ghost"
               size="icon"
               className={cn(
-                "h-10 w-10 hover:bg-accent",
-                isEnhancing && "animate-pulse"
+                "hover:bg-accent h-10 w-10",
+                isEnhancing && "animate-pulse",
               )}
               onClick={handleEnhancePrompt}
               disabled={isEnhancing || currentPrompt.trim() === ""}
             >
               {isEnhancing ? (
                 <div className="flex h-10 w-10 items-center justify-center">
-                  <div className="bg-foreground h-3 w-3 rounded-full opacity-70 animate-bounce" />
+                  <div className="bg-foreground h-3 w-3 animate-bounce rounded-full opacity-70" />
                 </div>
               ) : (
                 <span className="text-lg">✨</span>
