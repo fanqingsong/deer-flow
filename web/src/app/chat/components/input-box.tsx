@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
 // SPDX-License-Identifier: MIT
 
+import { MagicWandIcon } from "@radix-ui/react-icons";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import MessageInput, {
 } from "~/components/deer-flow/message-input";
 import { ReportStyleDialog } from "~/components/deer-flow/report-style-dialog";
 import { Tooltip } from "~/components/deer-flow/tooltip";
+import { BorderBeam } from "~/components/magicui/border-beam";
 import { Button } from "~/components/ui/button";
 import { enhancePrompt } from "~/core/api";
 import type { Option, Resource } from "~/core/messages";
@@ -232,7 +234,7 @@ export function InputBox({
           <ReportStyleDialog />
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Tooltip title="Enhance Prompt">
+          <Tooltip title="Enhance prompt with AI">
             <Button
               variant="ghost"
               size="icon"
@@ -248,7 +250,7 @@ export function InputBox({
                   <div className="bg-foreground h-3 w-3 animate-bounce rounded-full opacity-70" />
                 </div>
               ) : (
-                <span className="text-lg">✨</span>
+                <MagicWandIcon className="text-brand" />
               )}
             </Button>
           </Tooltip>
@@ -270,6 +272,21 @@ export function InputBox({
           </Tooltip>
         </div>
       </div>
+      {isEnhancing && (
+        <>
+          <BorderBeam
+            duration={5}
+            size={250}
+            className="from-transparent via-red-500 to-transparent"
+          />
+          <BorderBeam
+            duration={5}
+            delay={3}
+            size={250}
+            className="from-transparent via-blue-500 to-transparent"
+          />
+        </>
+      )}
     </div>
   );
 }
