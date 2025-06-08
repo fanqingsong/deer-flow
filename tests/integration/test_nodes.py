@@ -1,13 +1,17 @@
 from collections import namedtuple
 import json
 import pytest
-from unittest.mock import patch, MagicMock
+import asyncio
+import types
+from unittest.mock import patch, MagicMock, AsyncMock
+from collections import namedtuple
 from src.graph.nodes import planner_node
-import pytest
-import json
-from unittest.mock import patch, MagicMock
 from src.graph.nodes import human_feedback_node
 from src.graph.nodes import coordinator_node
+from src.graph.nodes import reporter_node
+from src.graph.nodes import _execute_agent_step
+from src.graph.nodes import _setup_and_execute_agent_step
+from src.graph.nodes import researcher_node
 
 # 在这里 mock 掉 get_llm_by_type，避免 ValueError
 with patch("src.llms.llm.get_llm_by_type", return_value=MagicMock()):
@@ -680,3 +684,732 @@ def test_coordinator_node_tool_calls_exception_handling(
         assert result.goto == "planner"
         assert result.update["locale"] == "en-US"
         assert result.update["resources"] == ["resource1", "resource2"]
+
+
+@pytest.fixture
+def mock_state_reporter():
+    # Simulate a plan object with title and thought attributes
+    Plan = namedtuple("Plan", ["title", "thought"])
+    return {
+        "current_plan": Plan(title="Test Title", thought="Test Thought"),
+        "locale": "en-US",
+        "observations": [],
+    }
+
+
+@pytest.fixture
+def mock_state_reporter_with_observations():
+    Plan = namedtuple("Plan", ["title", "thought"])
+    return {
+        "current_plan": Plan(title="Test Title", thought="Test Thought"),
+        "locale": "en-US",
+        "observations": ["Observation 1", "Observation 2"],
+    }
+
+
+@pytest.fixture
+def mock_configurable_reporter():
+    mock = MagicMock()
+    return mock
+
+
+@pytest.fixture
+def patch_config_from_runnable_config_reporter(mock_configurable_reporter):
+    with patch(
+        "src.graph.nodes.Configuration.from_runnable_config",
+        return_value=mock_configurable_reporter,
+    ):
+        yield
+
+
+@pytest.fixture
+def patch_apply_prompt_template_reporter():
+    with patch(
+        "src.graph.nodes.apply_prompt_template",
+        side_effect=lambda *args, **kwargs: [MagicMock()],
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def patch_human_message():
+    HumanMessage = MagicMock()
+    with patch("src.graph.nodes.HumanMessage", HumanMessage):
+        yield HumanMessage
+
+
+@pytest.fixture
+def patch_logger_reporter():
+    with patch("src.graph.nodes.logger") as mock_logger:
+        yield mock_logger
+
+
+def make_mock_llm_response_reporter(content):
+    resp = MagicMock()
+    resp.content = content
+    return resp
+
+
+def test_reporter_node_basic(
+    mock_state_reporter,
+    patch_config_from_runnable_config_reporter,
+    patch_apply_prompt_template_reporter,
+    patch_human_message,
+    patch_logger_reporter,
+):
+    # Patch get_llm_by_type and AGENT_LLM_MAP
+    with (
+        patch("src.graph.nodes.AGENT_LLM_MAP", {"reporter": "basic"}),
+        patch("src.graph.nodes.get_llm_by_type") as mock_get_llm,
+    ):
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = make_mock_llm_response_reporter(
+            "Final Report Content"
+        )
+        mock_get_llm.return_value = mock_llm
+
+        result = reporter_node(mock_state_reporter, MagicMock())
+        assert isinstance(result, dict)
+        assert "final_report" in result
+        assert result["final_report"] == "Final Report Content"
+        # Should call apply_prompt_template with correct arguments
+        patch_apply_prompt_template_reporter.assert_called()
+        # Should call invoke on the LLM
+        mock_llm.invoke.assert_called()
+
+
+def test_reporter_node_with_observations(
+    mock_state_reporter_with_observations,
+    patch_config_from_runnable_config_reporter,
+    patch_apply_prompt_template_reporter,
+    patch_human_message,
+    patch_logger_reporter,
+):
+    with (
+        patch("src.graph.nodes.AGENT_LLM_MAP", {"reporter": "basic"}),
+        patch("src.graph.nodes.get_llm_by_type") as mock_get_llm,
+    ):
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = make_mock_llm_response_reporter(
+            "Report with Observations"
+        )
+        mock_get_llm.return_value = mock_llm
+
+        result = reporter_node(mock_state_reporter_with_observations, MagicMock())
+        assert isinstance(result, dict)
+        assert "final_report" in result
+        assert result["final_report"] == "Report with Observations"
+        # Should call apply_prompt_template with correct arguments
+        patch_apply_prompt_template_reporter.assert_called()
+        # Should call invoke on the LLM
+        mock_llm.invoke.assert_called()
+
+
+def test_reporter_node_locale_default(
+    patch_config_from_runnable_config_reporter,
+    patch_apply_prompt_template_reporter,
+    patch_human_message,
+    patch_logger_reporter,
+):
+    # If locale is missing, should default to "en-US"
+    Plan = namedtuple("Plan", ["title", "thought"])
+    state = {
+        "current_plan": Plan(title="Test Title", thought="Test Thought"),
+        # "locale" omitted
+        "observations": [],
+    }
+    with (
+        patch("src.graph.nodes.AGENT_LLM_MAP", {"reporter": "basic"}),
+        patch("src.graph.nodes.get_llm_by_type") as mock_get_llm,
+    ):
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = make_mock_llm_response_reporter(
+            "Default Locale Report"
+        )
+        mock_get_llm.return_value = mock_llm
+
+        result = reporter_node(state, MagicMock())
+        assert isinstance(result, dict)
+        assert "final_report" in result
+        assert result["final_report"] == "Default Locale Report"
+
+
+# Create the real Step class for the tests
+class Step:
+    def __init__(self, title, description, execution_res=None):
+        self.title = title
+        self.description = description
+        self.execution_res = execution_res
+
+
+@pytest.fixture
+def mock_step():
+    return Step(title="Step 1", description="Desc 1", execution_res=None)
+
+
+@pytest.fixture
+def mock_completed_step():
+    return Step(title="Step 0", description="Desc 0", execution_res="Done")
+
+
+@pytest.fixture
+def mock_state_with_steps(mock_step, mock_completed_step):
+    # Simulate a plan with one completed and one unexecuted step
+    Plan = MagicMock()
+    Plan.steps = [mock_completed_step, mock_step]
+    return {
+        "current_plan": Plan,
+        "observations": ["obs1"],
+        "locale": "en-US",
+        "resources": [],
+    }
+
+
+@pytest.fixture
+def mock_state_no_unexecuted():
+    Step = namedtuple("Step", ["title", "description", "execution_res"])
+    Plan = MagicMock()
+    Plan.steps = [
+        Step(title="Step 1", description="Desc 1", execution_res="done"),
+        Step(title="Step 2", description="Desc 2", execution_res="done"),
+    ]
+    return {
+        "current_plan": Plan,
+        "observations": [],
+        "locale": "en-US",
+        "resources": [],
+    }
+
+
+@pytest.fixture
+def mock_agent():
+    agent = MagicMock()
+
+    async def ainvoke(input, config):
+        # Simulate agent returning a message list
+        return {"messages": [MagicMock(content="result content")]}
+
+    agent.ainvoke = ainvoke
+    return agent
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_basic(mock_state_with_steps, mock_agent):
+    # Should execute the first unexecuted step and update execution_res
+    with patch(
+        "src.graph.nodes.HumanMessage",
+        side_effect=lambda content, name=None: MagicMock(content=content, name=name),
+    ):
+        result = await _execute_agent_step(
+            mock_state_with_steps, mock_agent, "researcher"
+        )
+        assert isinstance(result, Command)
+        assert result.goto == "research_team"
+        assert "messages" in result.update
+        assert "observations" in result.update
+        # The new observation should be appended
+        assert result.update["observations"][-1] == "result content"
+        # The step's execution_res should be updated
+        assert (
+            mock_state_with_steps["current_plan"].steps[1].execution_res
+            == "result content"
+        )
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_no_unexecuted_step(
+    mock_state_no_unexecuted, mock_agent
+):
+    # Should return Command with goto="research_team" and not fail
+    with patch("src.graph.nodes.logger") as mock_logger:
+        result = await _execute_agent_step(
+            mock_state_no_unexecuted, mock_agent, "researcher"
+        )
+        assert isinstance(result, Command)
+        assert result.goto == "research_team"
+        mock_logger.warning.assert_called_with("No unexecuted step found")
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_with_resources_and_researcher(mock_step):
+    # Should add resource info and citation reminder for researcher
+    Resource = namedtuple("Resource", ["title", "description"])
+    resources = [Resource(title="file1.txt", description="desc1")]
+    Plan = MagicMock()
+    Plan.steps = [mock_step]
+    state = {
+        "current_plan": Plan,
+        "observations": [],
+        "locale": "en-US",
+        "resources": resources,
+    }
+    agent = MagicMock()
+
+    async def ainvoke(input, config):
+        # Check that resource info and citation reminder are present
+        messages = input["messages"]
+        assert any("local_search_tool" in m.content for m in messages)
+        assert any("DO NOT include inline citations" in m.content for m in messages)
+        return {"messages": [MagicMock(content="resource result")]}
+
+    agent.ainvoke = ainvoke
+    with patch(
+        "src.graph.nodes.HumanMessage",
+        side_effect=lambda content, name=None: MagicMock(content=content, name=name),
+    ):
+        result = await _execute_agent_step(state, agent, "researcher")
+        assert isinstance(result, Command)
+        assert result.goto == "research_team"
+        assert result.update["observations"][-1] == "resource result"
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_recursion_limit_env(
+    monkeypatch, mock_state_with_steps, mock_agent
+):
+    # Should respect AGENT_RECURSION_LIMIT env variable if set and valid
+    monkeypatch.setenv("AGENT_RECURSION_LIMIT", "42")
+    with (
+        patch("src.graph.nodes.logger") as mock_logger,
+        patch(
+            "src.graph.nodes.HumanMessage",
+            side_effect=lambda content, name=None: MagicMock(
+                content=content, name=name
+            ),
+        ),
+    ):
+        result = await _execute_agent_step(mock_state_with_steps, mock_agent, "coder")
+        assert isinstance(result, Command)
+        mock_logger.info.assert_any_call("Recursion limit set to: 42")
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_recursion_limit_env_invalid(
+    monkeypatch, mock_state_with_steps, mock_agent
+):
+    # Should fallback to default if env variable is invalid
+    monkeypatch.setenv("AGENT_RECURSION_LIMIT", "notanint")
+    with (
+        patch("src.graph.nodes.logger") as mock_logger,
+        patch(
+            "src.graph.nodes.HumanMessage",
+            side_effect=lambda content, name=None: MagicMock(
+                content=content, name=name
+            ),
+        ),
+    ):
+        result = await _execute_agent_step(mock_state_with_steps, mock_agent, "coder")
+        assert isinstance(result, Command)
+        mock_logger.warning.assert_any_call(
+            "Invalid AGENT_RECURSION_LIMIT value: 'notanint'. Using default value 25."
+        )
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_step_recursion_limit_env_negative(
+    monkeypatch, mock_state_with_steps, mock_agent
+):
+    # Should fallback to default if env variable is negative or zero
+    monkeypatch.setenv("AGENT_RECURSION_LIMIT", "-5")
+    with (
+        patch("src.graph.nodes.logger") as mock_logger,
+        patch(
+            "src.graph.nodes.HumanMessage",
+            side_effect=lambda content, name=None: MagicMock(
+                content=content, name=name
+            ),
+        ),
+    ):
+        result = await _execute_agent_step(mock_state_with_steps, mock_agent, "coder")
+        assert isinstance(result, Command)
+        mock_logger.warning.assert_any_call(
+            "AGENT_RECURSION_LIMIT value '-5' (parsed as -5) is not positive. Using default value 25."
+        )
+
+
+@pytest.fixture
+def mock_state_with_steps(mock_step, mock_completed_step):
+    # Simulate a plan with one completed and one unexecuted step
+    Plan = MagicMock()
+    Plan.steps = [mock_completed_step, mock_step]
+    return {
+        "current_plan": Plan,
+        "observations": ["obs1"],
+        "locale": "en-US",
+        "resources": [],
+    }
+
+
+@pytest.fixture
+def mock_config():
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_configurable_with_mcp():
+    mock = MagicMock()
+    mock.mcp_settings = {
+        "servers": {
+            "server1": {
+                "enabled_tools": ["toolA", "toolB"],
+                "add_to_agents": ["researcher"],
+                "transport": "http",
+                "command": "run",
+                "args": {},
+                "url": "http://localhost",
+                "env": {},
+                "other": "ignore",
+            }
+        }
+    }
+    return mock
+
+
+@pytest.fixture
+def mock_configurable_without_mcp():
+    mock = MagicMock()
+    mock.mcp_settings = None
+    return mock
+
+
+@pytest.fixture
+def patch_config_from_runnable_config_with_mcp(mock_configurable_with_mcp):
+    with patch(
+        "src.graph.nodes.Configuration.from_runnable_config",
+        return_value=mock_configurable_with_mcp,
+    ):
+        yield
+
+
+@pytest.fixture
+def patch_config_from_runnable_config_without_mcp(mock_configurable_without_mcp):
+    with patch(
+        "src.graph.nodes.Configuration.from_runnable_config",
+        return_value=mock_configurable_without_mcp,
+    ):
+        yield
+
+
+@pytest.fixture
+def patch_create_agent():
+    with patch("src.graph.nodes.create_agent") as mock:
+        yield mock
+
+
+@pytest.fixture
+def patch_execute_agent_step():
+    async def fake_execute_agent_step(state, agent, agent_type):
+        return "EXECUTED"
+
+    with patch(
+        "src.graph.nodes._execute_agent_step", side_effect=fake_execute_agent_step
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def patch_multiserver_mcp_client():
+    # Patch MultiServerMCPClient as async context manager
+    class FakeTool:
+        def __init__(self, name, description="desc"):
+            self.name = name
+            self.description = description
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        def get_tools(self):
+            return [
+                FakeTool("toolA", "descA"),
+                FakeTool("toolB", "descB"),
+                FakeTool("toolC", "descC"),
+            ]
+
+    with patch(
+        "src.graph.nodes.MultiServerMCPClient", return_value=FakeClient()
+    ) as mock:
+        yield mock
+
+
+@pytest.mark.asyncio
+async def test_setup_and_execute_agent_step_with_mcp(
+    mock_state_with_steps,
+    mock_config,
+    patch_config_from_runnable_config_with_mcp,
+    patch_create_agent,
+    patch_execute_agent_step,
+    patch_multiserver_mcp_client,
+):
+    # Should use MCP client, load tools, and call create_agent with correct tools
+    default_tools = [MagicMock(name="default_tool")]
+    agent_type = "researcher"
+
+    result = await _setup_and_execute_agent_step(
+        mock_state_with_steps,
+        mock_config,
+        agent_type,
+        default_tools,
+    )
+    # Should call create_agent with loaded_tools including toolA and toolB
+    args, kwargs = patch_create_agent.call_args
+    loaded_tools = args[2]
+    tool_names = [t.name for t in loaded_tools if hasattr(t, "name")]
+    assert "toolA" in tool_names
+    assert "toolB" in tool_names
+    # Should call _execute_agent_step
+    patch_execute_agent_step.assert_called_once()
+    assert result == "EXECUTED"
+
+
+@pytest.mark.asyncio
+async def test_setup_and_execute_agent_step_without_mcp(
+    mock_state_with_steps,
+    mock_config,
+    patch_config_from_runnable_config_without_mcp,
+    patch_create_agent,
+    patch_execute_agent_step,
+):
+    # Should use default tools and not use MCP client
+    default_tools = [MagicMock(name="default_tool")]
+    agent_type = "coder"
+
+    result = await _setup_and_execute_agent_step(
+        mock_state_with_steps,
+        mock_config,
+        agent_type,
+        default_tools,
+    )
+    # Should call create_agent with default_tools
+    args, kwargs = patch_create_agent.call_args
+    assert args[2] == default_tools
+    patch_execute_agent_step.assert_called_once()
+    assert result == "EXECUTED"
+
+
+@pytest.mark.asyncio
+async def test_setup_and_execute_agent_step_with_mcp_no_enabled_tools(
+    mock_state_with_steps,
+    mock_config,
+    patch_create_agent,
+    patch_execute_agent_step,
+):
+    # If mcp_settings present but no enabled_tools for agent_type, should fallback to default_tools
+    mcp_settings = {
+        "servers": {
+            "server1": {
+                "enabled_tools": ["toolA"],
+                "add_to_agents": ["other_agent"],
+                "transport": "http",
+                "command": "run",
+                "args": {},
+                "url": "http://localhost",
+                "env": {},
+            }
+        }
+    }
+    configurable = MagicMock()
+    configurable.mcp_settings = mcp_settings
+    with patch(
+        "src.graph.nodes.Configuration.from_runnable_config",
+        return_value=configurable,
+    ):
+        default_tools = [MagicMock(name="default_tool")]
+        agent_type = "researcher"
+        result = await _setup_and_execute_agent_step(
+            mock_state_with_steps,
+            mock_config,
+            agent_type,
+            default_tools,
+        )
+        args, kwargs = patch_create_agent.call_args
+        assert args[2] == default_tools
+        patch_execute_agent_step.assert_called_once()
+        assert result == "EXECUTED"
+
+
+@pytest.mark.asyncio
+async def test_setup_and_execute_agent_step_with_mcp_tools_description_update(
+    mock_state_with_steps,
+    mock_config,
+    patch_config_from_runnable_config_with_mcp,
+    patch_create_agent,
+    patch_execute_agent_step,
+):
+    # Should update tool.description with Powered by info
+    default_tools = [MagicMock(name="default_tool")]
+    agent_type = "researcher"
+
+    # Patch MultiServerMCPClient to check description update
+    class FakeTool:
+        def __init__(self, name, description="desc"):
+            self.name = name
+            self.description = description
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        def get_tools(self):
+            return [FakeTool("toolA", "descA")]
+
+    with patch("src.graph.nodes.MultiServerMCPClient", return_value=FakeClient()):
+        await _setup_and_execute_agent_step(
+            mock_state_with_steps,
+            mock_config,
+            agent_type,
+            default_tools,
+        )
+        # The tool description should be updated
+        args, kwargs = patch_create_agent.call_args
+        loaded_tools = args[2]
+        found = False
+        for t in loaded_tools:
+            if hasattr(t, "name") and t.name == "toolA":
+                assert t.description.startswith("Powered by 'server1'.\n")
+                found = True
+        assert found
+
+
+@pytest.fixture
+def mock_state_with_resources():
+    return {"resources": ["resource1", "resource2"], "other": "value"}
+
+
+@pytest.fixture
+def mock_state_without_resources():
+    return {"other": "value"}
+
+
+@pytest.fixture
+def mock_config():
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_configurable():
+    mock = MagicMock()
+    mock.max_search_results = 7
+    return mock
+
+
+@pytest.fixture
+def patch_config_from_runnable_config(mock_configurable):
+    with patch(
+        "src.graph.nodes.Configuration.from_runnable_config",
+        return_value=mock_configurable,
+    ):
+        yield
+
+
+@pytest.fixture
+def patch_get_web_search_tool():
+    with patch("src.graph.nodes.get_web_search_tool") as mock:
+        mock_tool = MagicMock(name="web_search_tool")
+        mock.return_value = mock_tool
+        yield mock
+
+
+@pytest.fixture
+def patch_crawl_tool():
+    with patch("src.graph.nodes.crawl_tool", MagicMock(name="crawl_tool")):
+        yield
+
+
+@pytest.fixture
+def patch_get_retriever_tool():
+    with patch("src.graph.nodes.get_retriever_tool") as mock:
+        yield mock
+
+
+@pytest.fixture
+def patch_setup_and_execute_agent_step():
+    async def fake_setup_and_execute_agent_step(state, config, agent_type, tools):
+        return "RESEARCHER_RESULT"
+
+    with patch(
+        "src.graph.nodes._setup_and_execute_agent_step",
+        side_effect=fake_setup_and_execute_agent_step,
+    ) as mock:
+        yield mock
+
+
+@pytest.mark.asyncio
+async def test_researcher_node_with_retriever_tool(
+    mock_state_with_resources,
+    mock_config,
+    patch_config_from_runnable_config,
+    patch_get_web_search_tool,
+    patch_crawl_tool,
+    patch_get_retriever_tool,
+    patch_setup_and_execute_agent_step,
+):
+    # Simulate retriever_tool is returned
+    retriever_tool = MagicMock(name="retriever_tool")
+    patch_get_retriever_tool.return_value = retriever_tool
+
+    result = await researcher_node(mock_state_with_resources, mock_config)
+
+    # Should call get_web_search_tool with correct max_search_results
+    patch_get_web_search_tool.assert_called_once_with(7)
+    # Should call get_retriever_tool with resources
+    patch_get_retriever_tool.assert_called_once_with(["resource1", "resource2"])
+    # Should call _setup_and_execute_agent_step with retriever_tool first
+    args, kwargs = patch_setup_and_execute_agent_step.call_args
+    tools = args[3]
+    assert tools[0] == retriever_tool
+    assert patch_get_web_search_tool.return_value in tools
+    assert result == "RESEARCHER_RESULT"
+
+
+@pytest.mark.asyncio
+async def test_researcher_node_without_retriever_tool(
+    mock_state_with_resources,
+    mock_config,
+    patch_config_from_runnable_config,
+    patch_get_web_search_tool,
+    patch_crawl_tool,
+    patch_get_retriever_tool,
+    patch_setup_and_execute_agent_step,
+):
+    # Simulate retriever_tool is None
+    patch_get_retriever_tool.return_value = None
+
+    result = await researcher_node(mock_state_with_resources, mock_config)
+
+    patch_get_web_search_tool.assert_called_once_with(7)
+    patch_get_retriever_tool.assert_called_once_with(["resource1", "resource2"])
+    args, kwargs = patch_setup_and_execute_agent_step.call_args
+    tools = args[3]
+    # Should not include retriever_tool
+    assert all(getattr(t, "name", None) != "retriever_tool" for t in tools)
+    assert patch_get_web_search_tool.return_value in tools
+    assert result == "RESEARCHER_RESULT"
+
+
+@pytest.mark.asyncio
+async def test_researcher_node_without_resources(
+    mock_state_without_resources,
+    mock_config,
+    patch_config_from_runnable_config,
+    patch_get_web_search_tool,
+    patch_crawl_tool,
+    patch_get_retriever_tool,
+    patch_setup_and_execute_agent_step,
+):
+    patch_get_retriever_tool.return_value = None
+
+    result = await researcher_node(mock_state_without_resources, mock_config)
+
+    patch_get_web_search_tool.assert_called_once_with(7)
+    patch_get_retriever_tool.assert_called_once_with([])
+    args, kwargs = patch_setup_and_execute_agent_step.call_args
+    tools = args[3]
+    assert patch_get_web_search_tool.return_value in tools
+    assert result == "RESEARCHER_RESULT"
