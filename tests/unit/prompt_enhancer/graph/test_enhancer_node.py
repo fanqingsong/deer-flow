@@ -19,36 +19,29 @@ def mock_llm():
 
 
 @pytest.fixture
-def mock_template():
-    """Mock Jinja2 template."""
-    template = MagicMock()
-    template.render.return_value = "System prompt template"
-    return template
-
-
-@pytest.fixture
-def mock_env(mock_template):
-    """Mock template environment."""
-    env = MagicMock()
-    env.get_template.return_value = mock_template
-    return env
+def mock_messages():
+    """Mock messages returned by apply_prompt_template."""
+    return [
+        SystemMessage(content="System prompt template"),
+        HumanMessage(content="Test human message"),
+    ]
 
 
 class TestPromptEnhancerNode:
     """Test cases for prompt_enhancer_node function."""
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
     def test_basic_prompt_enhancement(
-        self, mock_get_llm, mock_env, mock_llm, mock_template
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
         """Test basic prompt enhancement without context or report style."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
         state = PromptEnhancerState(prompt="Write about AI")
 
@@ -56,29 +49,30 @@ class TestPromptEnhancerNode:
 
         # Verify LLM was called
         mock_get_llm.assert_called_once_with("basic")
-        mock_llm.invoke.assert_called_once()
+        mock_llm.invoke.assert_called_once_with(mock_messages)
 
-        # Verify template was used
-        mock_env.get_template.assert_called_once_with(
-            "prompt_enhancer/prompt_enhancer.md"
-        )
-        mock_template.render.assert_called_once_with()
+        # Verify apply_prompt_template was called correctly
+        mock_apply_template.assert_called_once()
+        call_args = mock_apply_template.call_args
+        assert call_args[0][0] == "prompt_enhancer/prompt_enhancer"
+        assert "messages" in call_args[0][1]
+        assert "report_style" in call_args[0][1]
 
         # Verify result
         assert result == {"output": "Enhanced test prompt"}
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
     def test_prompt_enhancement_with_report_style(
-        self, mock_get_llm, mock_env, mock_llm, mock_template
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
         """Test prompt enhancement with report style."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
         state = PromptEnhancerState(
             prompt="Write about AI", report_style=ReportStyle.ACADEMIC
@@ -86,24 +80,27 @@ class TestPromptEnhancerNode:
 
         result = prompt_enhancer_node(state)
 
-        # Verify template was rendered with report_style
-        mock_template.render.assert_called_once_with(report_style="academic")
+        # Verify apply_prompt_template was called with report_style
+        mock_apply_template.assert_called_once()
+        call_args = mock_apply_template.call_args
+        assert call_args[0][0] == "prompt_enhancer/prompt_enhancer"
+        assert call_args[0][1]["report_style"] == ReportStyle.ACADEMIC
 
         # Verify result
         assert result == {"output": "Enhanced test prompt"}
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
     def test_prompt_enhancement_with_context(
-        self, mock_get_llm, mock_env, mock_llm, mock_template
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
         """Test prompt enhancement with additional context."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
         state = PromptEnhancerState(
             prompt="Write about AI", context="Focus on machine learning applications"
@@ -111,93 +108,74 @@ class TestPromptEnhancerNode:
 
         result = prompt_enhancer_node(state)
 
-        # Verify LLM was called with context in the message
-        call_args = mock_llm.invoke.call_args[0][0]
-        human_message = call_args[1]
+        # Verify apply_prompt_template was called
+        mock_apply_template.assert_called_once()
+        call_args = mock_apply_template.call_args
+
+        # Check that the context was included in the human message
+        messages_arg = call_args[0][1]["messages"]
+        assert len(messages_arg) == 1
+        human_message = messages_arg[0]
         assert isinstance(human_message, HumanMessage)
         assert "Focus on machine learning applications" in human_message.content
 
         assert result == {"output": "Enhanced test prompt"}
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
-    def test_prompt_enhancement_with_all_fields(
-        self, mock_get_llm, mock_env, mock_llm, mock_template
+    def test_error_handling(
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
-        """Test prompt enhancement with all fields populated."""
+        """Test error handling when LLM call fails."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
-        state = PromptEnhancerState(
-            prompt="Write about AI",
-            context="Focus on ethics",
-            report_style=ReportStyle.NEWS,
-        )
+        # Mock LLM to raise an exception
+        mock_llm.invoke.side_effect = Exception("LLM error")
 
+        state = PromptEnhancerState(prompt="Test prompt")
         result = prompt_enhancer_node(state)
 
-        # Verify template was rendered with report_style
-        mock_template.render.assert_called_once_with(report_style="news")
+        # Should return original prompt on error
+        assert result == {"output": "Test prompt"}
 
-        # Verify LLM was called with proper messages
-        call_args = mock_llm.invoke.call_args[0][0]
-        assert len(call_args) == 2
-        assert isinstance(call_args[0], SystemMessage)
-        assert isinstance(call_args[1], HumanMessage)
-        assert "Focus on ethics" in call_args[1].content
-
-        assert result == {"output": "Enhanced test prompt"}
-
-    @pytest.mark.parametrize(
-        "report_style,expected_value",
-        [
-            (ReportStyle.ACADEMIC, "academic"),
-            (ReportStyle.POPULAR_SCIENCE, "popular_science"),
-            (ReportStyle.NEWS, "news"),
-            (ReportStyle.SOCIAL_MEDIA, "social_media"),
-        ],
-    )
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
-    def test_different_report_styles(
-        self,
-        mock_get_llm,
-        mock_env,
-        report_style,
-        expected_value,
-        mock_llm,
-        mock_template,
+    def test_template_error_handling(
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
-        """Test prompt enhancement with different report styles."""
+        """Test error handling when template application fails."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
 
-        state = PromptEnhancerState(prompt="Test prompt", report_style=report_style)
+        # Mock apply_prompt_template to raise an exception
+        mock_apply_template.side_effect = Exception("Template error")
 
+        state = PromptEnhancerState(prompt="Test prompt")
         result = prompt_enhancer_node(state)
 
-        # Verify template was rendered with correct report_style value
-        mock_template.render.assert_called_once_with(report_style=expected_value)
-        assert result == {"output": "Enhanced test prompt"}
+        # Should return original prompt on error
+        assert result == {"output": "Test prompt"}
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
-    def test_prefix_removal(self, mock_get_llm, mock_env, mock_llm, mock_template):
+    def test_prefix_removal(
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
+    ):
         """Test that common prefixes are removed from LLM response."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
         # Test different prefixes that should be removed
         test_cases = [
@@ -217,58 +195,18 @@ class TestPromptEnhancerNode:
 
             assert result == {"output": "This is the enhanced prompt"}
 
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
+    @patch("src.prompt_enhancer.graph.enhancer_node.apply_prompt_template")
     @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
     @patch(
         "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
         {"prompt_enhancer": "basic"},
     )
-    def test_error_handling(self, mock_get_llm, mock_env, mock_llm, mock_template):
-        """Test error handling when LLM call fails."""
-        mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
-
-        # Mock LLM to raise an exception
-        mock_llm.invoke.side_effect = Exception("LLM error")
-
-        state = PromptEnhancerState(prompt="Test prompt")
-        result = prompt_enhancer_node(state)
-
-        # Should return original prompt on error
-        assert result == {"output": "Test prompt"}
-
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
-    @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
-    @patch(
-        "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
-        {"prompt_enhancer": "basic"},
-    )
-    def test_template_error_handling(
-        self, mock_get_llm, mock_env, mock_llm, mock_template
+    def test_whitespace_handling(
+        self, mock_get_llm, mock_apply_template, mock_llm, mock_messages
     ):
-        """Test error handling when template rendering fails."""
-        mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
-
-        # Mock template to raise an exception
-        mock_template.render.side_effect = Exception("Template error")
-
-        state = PromptEnhancerState(prompt="Test prompt")
-        result = prompt_enhancer_node(state)
-
-        # Should return original prompt on error
-        assert result == {"output": "Test prompt"}
-
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
-    @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
-    @patch(
-        "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
-        {"prompt_enhancer": "basic"},
-    )
-    def test_whitespace_handling(self, mock_get_llm, mock_env, mock_llm, mock_template):
         """Test that whitespace is properly stripped from LLM response."""
         mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
+        mock_apply_template.return_value = mock_messages
 
         # Mock LLM response with extra whitespace
         mock_llm.invoke.return_value = MagicMock(
@@ -279,35 +217,3 @@ class TestPromptEnhancerNode:
         result = prompt_enhancer_node(state)
 
         assert result == {"output": "Enhanced prompt"}
-
-    @patch("src.prompt_enhancer.graph.enhancer_node.env")
-    @patch("src.prompt_enhancer.graph.enhancer_node.get_llm_by_type")
-    @patch(
-        "src.prompt_enhancer.graph.enhancer_node.AGENT_LLM_MAP",
-        {"prompt_enhancer": "basic"},
-    )
-    def test_message_structure(self, mock_get_llm, mock_env, mock_llm, mock_template):
-        """Test that messages are structured correctly."""
-        mock_get_llm.return_value = mock_llm
-        mock_env.get_template.return_value = mock_template
-        mock_template.render.return_value = "Test system prompt"
-
-        state = PromptEnhancerState(
-            prompt="Original prompt", context="Additional context"
-        )
-
-        prompt_enhancer_node(state)
-
-        # Verify the messages passed to LLM
-        call_args = mock_llm.invoke.call_args[0][0]
-        assert len(call_args) == 2
-
-        system_message = call_args[0]
-        human_message = call_args[1]
-
-        assert isinstance(system_message, SystemMessage)
-        assert system_message.content == "Test system prompt"
-
-        assert isinstance(human_message, HumanMessage)
-        assert "Original prompt" in human_message.content
-        assert "Additional context" in human_message.content

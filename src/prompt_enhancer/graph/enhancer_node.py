@@ -7,7 +7,7 @@ from langchain.schema import HumanMessage, SystemMessage
 
 from src.config.agents import AGENT_LLM_MAP
 from src.llms.llm import get_llm_by_type
-from src.prompts.template import env
+from src.prompts.template import env, apply_prompt_template
 from src.prompt_enhancer.graph.state import PromptEnhancerState
 
 logger = logging.getLogger(__name__)
@@ -20,28 +20,23 @@ def prompt_enhancer_node(state: PromptEnhancerState):
     model = get_llm_by_type(AGENT_LLM_MAP["prompt_enhancer"])
 
     try:
-        # Get the system prompt template with report_style parameter
-        template = env.get_template("prompt_enhancer/prompt_enhancer.md")
-
-        # Prepare template variables
-        template_vars = {}
-        if state.get("report_style"):
-            template_vars["report_style"] = state["report_style"].value
-
-        # Render the template with variables
-        system_prompt = template.render(**template_vars)
 
         # Create messages with context if provided
         context_info = ""
         if state.get("context"):
             context_info = f"\n\nAdditional context: {state['context']}"
 
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(
-                content=f"Please enhance this prompt:{context_info}\n\nOriginal prompt: {state['prompt']}"
-            ),
-        ]
+        original_prompt_message = HumanMessage(
+            content=f"Please enhance this prompt:{context_info}\n\nOriginal prompt: {state['prompt']}"
+        )
+
+        messages = apply_prompt_template(
+            "prompt_enhancer/prompt_enhancer",
+            {
+                "messages": [original_prompt_message],
+                "report_style": state.get("report_style"),
+            },
+        )
 
         # Get the response from the model
         response = model.invoke(messages)
