@@ -333,8 +333,9 @@ def test_planner_node_plan_iterations_exceeded(mock_state_planner):
     # plan_iterations >= max_plan_iterations
     state = dict(mock_state_planner)
     state["plan_iterations"] = 5
-    with patch("src.graph.nodes.AGENT_LLM_MAP", {"planner": "basic"}), patch(
-        "src.graph.nodes.get_llm_by_type", return_value=MagicMock()
+    with (
+        patch("src.graph.nodes.AGENT_LLM_MAP", {"planner": "basic"}),
+        patch("src.graph.nodes.get_llm_by_type", return_value=MagicMock()),
     ):
         result = planner_node(state, MagicMock())
         assert isinstance(result, Command)
