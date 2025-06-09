@@ -4,7 +4,6 @@ import pytest
 import asyncio
 import types
 from unittest.mock import patch, MagicMock, AsyncMock
-from collections import namedtuple
 from src.graph.nodes import planner_node
 from src.graph.nodes import human_feedback_node
 from src.graph.nodes import coordinator_node
@@ -334,7 +333,9 @@ def test_planner_node_plan_iterations_exceeded(mock_state_planner):
     # plan_iterations >= max_plan_iterations
     state = dict(mock_state_planner)
     state["plan_iterations"] = 5
-    with patch("src.graph.nodes.AGENT_LLM_MAP", {"planner": "basic"}):
+    with patch("src.graph.nodes.AGENT_LLM_MAP", {"planner": "basic"}), patch(
+        "src.graph.nodes.get_llm_by_type", return_value=MagicMock()
+    ):
         result = planner_node(state, MagicMock())
         assert isinstance(result, Command)
         assert result.goto == "reporter"
