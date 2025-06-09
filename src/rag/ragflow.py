@@ -122,4 +122,3 @@ def parse_uri(uri: str) -> tuple[str, str]:
     if parsed.scheme != "rag":
         raise ValueError(f"Invalid URI: {uri}")
     return parsed.path.split("/")[1], parsed.fragment
-
