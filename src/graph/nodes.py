@@ -228,14 +228,14 @@ def coordinator_node(
             goto = "background_investigator"
         try:
             for tool_call in response.tool_calls:
-                if tool_call.get("name", "") != "handoff_to_planner":
-                    continue
-                if tool_call.get("args", {}).get("locale") and tool_call.get(
-                    "args", {}
-                ).get("research_topic"):
-                    locale = tool_call.get("args", {}).get("locale")
+                try:
+                    args = tool_call.get("args", {})
+                    # Extract locale from tool call args if present
+                    if "locale" in args:
+                        locale = args["locale"]  # Override the state locale
                     research_topic = tool_call.get("args", {}).get("research_topic")
-                    break
+                except Exception as e:
+                    logger.error(f"Error processing tool call: {e}")
         except Exception as e:
             logger.error(f"Error processing tool calls: {e}")
     else:
