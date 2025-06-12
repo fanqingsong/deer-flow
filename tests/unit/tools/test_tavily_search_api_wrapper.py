@@ -1,3 +1,5 @@
+# Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
+# SPDX-License-Identifier: MIT
 import json
 import pytest
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
