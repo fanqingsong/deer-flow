@@ -60,5 +60,3 @@ def get_retriever_tool(resources: List[Resource]) -> RetrieverTool | None:
     if not retriever:
         return None
     return RetrieverTool(retriever=retriever, resources=resources)
-
-

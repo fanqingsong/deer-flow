@@ -111,4 +111,3 @@ class EnhancedTavilySearchAPIWrapper(OriginalTavilySearchAPIWrapper):
             }
             clean_results.append(clean_result)
         return clean_results
-
