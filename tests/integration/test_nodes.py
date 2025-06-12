@@ -637,7 +637,12 @@ def test_coordinator_node_with_tool_calls_locale_override(
     patch_logger,
 ):
     # tool_calls with locale in args should override locale
-    tool_calls = [{"name": "handoff_to_planner", "args": {"locale": "zh-CN", "research_topic": "test topic"}}]
+    tool_calls = [
+        {
+            "name": "handoff_to_planner",
+            "args": {"locale": "zh-CN", "research_topic": "test topic"},
+        }
+    ]
     with (
         patch("src.graph.nodes.AGENT_LLM_MAP", {"coordinator": "basic"}),
         patch("src.graph.nodes.get_llm_by_type") as mock_get_llm,
