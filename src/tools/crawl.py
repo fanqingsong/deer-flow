@@ -10,7 +10,12 @@ from .decorators import log_io
 from src.crawler import Crawler
 
 logger = logging.getLogger(__name__)
-
+if not logger.handlers:
+    file_handler = logging.FileHandler('app.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.setLevel(logging.INFO)
 
 @tool
 @log_io

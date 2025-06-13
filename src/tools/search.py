@@ -17,7 +17,13 @@ from src.tools.tavily_search.tavily_search_results_with_images import (
 from src.tools.decorators import create_logged_tool
 
 logger = logging.getLogger(__name__)
-
+if not logger.handlers:
+    file_handler = logging.FileHandler('app.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.setLevel(logging.INFO)
+    
 # Create logged versions of the search tools
 LoggedTavilySearch = create_logged_tool(TavilySearchResultsWithImages)
 LoggedDuckDuckGoSearch = create_logged_tool(DuckDuckGoSearchResults)

@@ -5,7 +5,15 @@ import logging
 import functools
 from typing import Any, Callable, Type, TypeVar
 
+# Configure logger to write to a file
 logger = logging.getLogger(__name__)
+# Check if handlers are already configured to avoid duplicate handlers
+if not logger.handlers:
+    file_handler = logging.FileHandler('app.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.setLevel(logging.INFO)
 
 T = TypeVar("T")
 

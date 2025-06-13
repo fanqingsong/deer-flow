@@ -19,6 +19,9 @@ from src.tools import (
     get_web_search_tool,
     get_retriever_tool,
     python_repl_tool,
+    get_price,
+    get_simple_moving_average,
+    get_exponential_moving_average,
 )
 
 from src.config.agents import AGENT_LLM_MAP
@@ -377,7 +380,10 @@ async def _execute_agent_step(
         )
         recursion_limit = default_recursion_limit
 
-    logger.info(f"Agent input: {agent_input}")
+    #logger.info(f"Agent input: {agent_input}")
+    for message in agent_input["messages"]:
+        logger.info(f"Agent input: len({message.content})")
+        
     result = await agent.ainvoke(
         input=agent_input, config={"recursion_limit": recursion_limit}
     )
@@ -469,7 +475,7 @@ async def researcher_node(
     """Researcher node that do research"""
     logger.info("Researcher node is researching.")
     configurable = Configuration.from_runnable_config(config)
-    tools = [get_web_search_tool(configurable.max_search_results), crawl_tool]
+    tools = [get_web_search_tool(configurable.max_search_results), crawl_tool, get_price, get_simple_moving_average, get_exponential_moving_average]
     retriever_tool = get_retriever_tool(state.get("resources", []))
     if retriever_tool:
         tools.insert(0, retriever_tool)

@@ -9,6 +9,11 @@ from src.graph import build_graph
 logging.basicConfig(
     level=logging.INFO,  # Default level is INFO
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler(),
+    ],
+    force=True,
 )
 
 

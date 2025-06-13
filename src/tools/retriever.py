@@ -14,7 +14,12 @@ from src.config.tools import SELECTED_RAG_PROVIDER
 from src.rag import Document, Retriever, Resource, build_retriever
 
 logger = logging.getLogger(__name__)
-
+if not logger.handlers:
+    file_handler = logging.FileHandler('app.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.setLevel(logging.INFO)
 
 class RetrieverInput(BaseModel):
     keywords: str = Field(description="search keywords to look up")

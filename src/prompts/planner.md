@@ -64,6 +64,7 @@ Different types of steps have different web search requirements:
    - Collecting competitor analysis
    - Researching current events or news
    - Finding statistical data or reports
+   - data calculation and collection like financial indicators, technical indicators, etc.
 
 2. **Data Processing Steps** (`need_search: false`):
    - API calls and data extraction
