@@ -8,12 +8,14 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_deepseek import ChatDeepSeek
 from typing import get_args
+from langchain_openai import AzureChatOpenAI
 
 from src.config import load_yaml_config
 from src.config.agents import LLMType
 
 # Cache for LLM instances
-_llm_cache: dict[LLMType, ChatOpenAI] = {}
+_llm_cache: dict[LLMType, AzureChatOpenAI] = {}
+
 
 
 def _get_config_file_path() -> str:
@@ -47,7 +49,7 @@ def _get_env_llm_conf(llm_type: str) -> Dict[str, Any]:
 
 def _create_llm_use_conf(
     llm_type: LLMType, conf: Dict[str, Any]
-) -> ChatOpenAI | ChatDeepSeek:
+) -> ChatOpenAI | ChatDeepSeek | AzureChatOpenAI:
     """Create LLM instance using configuration."""
     llm_type_config_keys = _get_llm_type_config_keys()
     config_key = llm_type_config_keys.get(llm_type)
@@ -57,30 +59,14 @@ def _create_llm_use_conf(
 
     llm_conf = conf.get(config_key, {})
     if not isinstance(llm_conf, dict):
-        raise ValueError(f"Invalid LLM configuration for {llm_type}: {llm_conf}")
+        raise ValueError(f"Invalid LLM Conf: {llm_type}")
 
-    # Get configuration from environment variables
-    env_conf = _get_env_llm_conf(llm_type)
-
-    # Merge configurations, with environment variables taking precedence
-    merged_conf = {**llm_conf, **env_conf}
-
-    if not merged_conf:
-        raise ValueError(f"No configuration found for LLM type: {llm_type}")
-
-    if llm_type == "reasoning":
-        merged_conf["api_base"] = merged_conf.pop("base_url", None)
-
-    return (
-        ChatOpenAI(**merged_conf)
-        if llm_type != "reasoning"
-        else ChatDeepSeek(**merged_conf)
-    )
+    return AzureChatOpenAI(**llm_conf)
 
 
 def get_llm_by_type(
     llm_type: LLMType,
-) -> ChatOpenAI:
+) -> AzureChatOpenAI:
     """
     Get LLM instance by type. Returns cached instance if available.
     """
@@ -133,3 +119,33 @@ def get_configured_llm_models() -> dict[str, list[str]]:
 # In the future, we will use reasoning_llm and vl_llm for different purposes
 # reasoning_llm = get_llm_by_type("reasoning")
 # vl_llm = get_llm_by_type("vision")
+
+# ... existing code ...
+
+if __name__ == "__main__":
+    from typing import get_args
+
+    print("Configured LLM models:")
+    configured = get_configured_llm_models()
+    for llm_type, models in configured.items():
+        print(f"  {llm_type}: {models}")
+
+    print("\nAttempting to instantiate and query each LLM type...\n")
+    for llm_type in get_args(LLMType):
+        try:
+            print(f"---\nLLM Type: {llm_type}")
+            llm = get_llm_by_type(llm_type)
+            print(f"Successfully instantiated {llm_type} model: {llm}")
+
+            # Attempt a simple query if the model supports 'invoke' or '__call__'
+            test_prompt = "Hello! What is 2 + 2?"
+            if hasattr(llm, "invoke"):
+                response = llm.invoke(test_prompt)
+                print(f"Response: {response}")
+            elif callable(llm):
+                response = llm(test_prompt)
+                print(f"Response: {response}")
+            else:
+                print("Model does not support direct querying.")
+        except Exception as e:
+            print(f"Error with {llm_type}: {e}")
