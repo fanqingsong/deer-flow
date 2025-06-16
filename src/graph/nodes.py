@@ -101,8 +101,10 @@ def planner_node(
             }
         ]
 
-    if AGENT_LLM_MAP["planner"] == "basic":
-        llm = get_llm_by_type(AGENT_LLM_MAP["planner"]).with_structured_output(
+    if configurable.enable_deep_thinking:
+        llm = get_llm_by_type("reasoning")
+    elif AGENT_LLM_MAP["planner"] == "basic":
+        llm = get_llm_by_type("basic").with_structured_output(
             Plan,
             method="json_mode",
         )
@@ -114,7 +116,7 @@ def planner_node(
         return Command(goto="reporter")
 
     full_response = ""
-    if AGENT_LLM_MAP["planner"] == "basic":
+    if AGENT_LLM_MAP["planner"] == "basic" and not configurable.enable_deep_thinking:
         response = llm.invoke(messages)
         full_response = response.model_dump_json(indent=4, exclude_none=True)
     else:
