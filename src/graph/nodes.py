@@ -213,7 +213,7 @@ def coordinator_node(
     configurable = Configuration.from_runnable_config(config)
     messages = apply_prompt_template("coordinator", state)
     response = (
-        get_llm_by_type(AGENT_LLM_MAP["coordinator"])
+        get_llm_by_type(AGENT_LLM_MAP["coordinator"],tools=[handoff_to_planner])
         .bind_tools([handoff_to_planner])
         .invoke(messages)
     )
