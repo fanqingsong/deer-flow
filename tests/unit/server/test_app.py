@@ -426,7 +426,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -466,7 +466,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -500,7 +500,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -537,7 +537,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -579,7 +579,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -621,7 +621,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
@@ -660,7 +660,7 @@ class TestAstreamWorkflowGenerator:
             mcp_settings={},
             enable_background_investigation=False,
             report_style=ReportStyle.ACADEMIC,
-            enable_deep_thinking=False
+            enable_deep_thinking=False,
         )
 
         events = []
