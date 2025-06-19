@@ -10,6 +10,7 @@ import Script from "next/script";
 import { ThemeProviderWrapper } from "~/components/deer-flow/theme-provider-wrapper";
 import { loadConfig } from "~/core/api/config";
 import { env } from "~/env";
+import MCPConfigProvider from "../components/deer-flow/mcp-config-provider";
 
 import { Toaster } from "../components/deer-flow/toaster";
 
@@ -46,7 +47,9 @@ export default async function RootLayout({
         </Script>
       </head>
       <body className="bg-app">
-        <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
+        <MCPConfigProvider>
+          <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
+        </MCPConfigProvider>
         <Toaster />
         {
           // NO USER BEHAVIOR TRACKING OR PRIVATE DATA COLLECTION BY DEFAULT
