@@ -47,7 +47,7 @@ def _get_env_llm_conf(llm_type: str) -> Dict[str, Any]:
 
 def _create_llm_use_conf(
     llm_type: LLMType, conf: Dict[str, Any]
-) -> ChatOpenAI | ChatDeepSeek:
+) -> ChatOpenAI:
     """Create LLM instance using configuration."""
     llm_type_config_keys = _get_llm_type_config_keys()
     config_key = llm_type_config_keys.get(llm_type)
@@ -68,14 +68,7 @@ def _create_llm_use_conf(
     if not merged_conf:
         raise ValueError(f"No configuration found for LLM type: {llm_type}")
 
-    if llm_type == "reasoning":
-        merged_conf["api_base"] = merged_conf.pop("base_url", None)
-
-    return (
-        ChatOpenAI(**merged_conf)
-        if llm_type != "reasoning"
-        else ChatDeepSeek(**merged_conf)
-    )
+    return ChatOpenAI(**merged_conf)
 
 
 def get_llm_by_type(

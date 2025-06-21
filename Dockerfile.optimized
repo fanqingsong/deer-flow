@@ -1,0 +1,61 @@
+# Multi-stage build for better caching and smaller final image
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+
+# Install uv and set up environment
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Set environment variables for better network handling
+ENV UV_CACHE_DIR=/root/.cache/uv
+ENV UV_INDEX_URL=https://pypi.org/simple/
+ENV UV_EXTRA_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/
+ENV UV_NATIVE_TLS=1
+ENV UV_NO_PROGRESS=0
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies that might be needed
+# RUN apt-get update && apt-get install -y \
+#     curl \
+#     wget \
+#     ca-certificates \
+#     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Dependencies stage - separate layer for better caching
+FROM base AS dependencies
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies with retry mechanism
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    (uv sync --locked --no-install-project || \
+     (echo "First attempt failed, retrying with different index..." && \
+      UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/ uv sync --locked --no-install-project))
+
+# Application stage
+FROM base AS application
+
+# Copy dependencies from previous stage
+COPY --from=dependencies /app/.venv /app/.venv
+
+# Copy application code
+COPY . /app
+
+# Install the application with retry mechanism
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    (uv sync --locked || \
+     (echo "First attempt failed, retrying with different index..." && \
+      UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple/ uv sync --locked))
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application
+CMD ["uv", "run", "python", "server.py", "--host", "0.0.0.0", "--port", "8000"] 

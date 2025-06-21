@@ -1,6 +1,6 @@
 ##### DEPENDENCIES
 
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:20-alpine AS deps
+FROM node:20-alpine AS deps
 
 # Set Alpine package manager to use mirrors
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
@@ -27,7 +27,7 @@ RUN \
 
 ##### BUILDER
 
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:20-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 
@@ -48,7 +48,7 @@ RUN \
 
 ##### RUNNER
 
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:20-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -72,4 +72,4 @@ ENV PORT=3000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
-CMD ["server.js"]
+CMD ["server.js"] 
